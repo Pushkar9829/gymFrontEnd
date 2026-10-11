@@ -53,5 +53,38 @@ await Stock.create({ productId: bar._id, branchId: branch._id, qty: 50 });
 await Company.create({ name: 'Acme Tech', gstin: '29AAACA1234A1Z5', discountPercent: 10, billTo: 'member' });
 await Equipment.create({ branchId: branch._id, name: 'Treadmill #1', category: 'cardio', brand: 'Life Fitness', serviceIntervalDays: 90, lastServiceAt: addDays(new Date(), -85), nextServiceDue: addDays(new Date(), 5) });
 await Locker.insertMany(Array.from({ length: 12 }, (_, i) => ({ branchId: branch._id, number: `L${i + 1}`, monthlyFee: 30000 })));
+
+// Extra records for 08-secondary-actions (own members/staff/classes so other specs are not affected).
+const { Plan } = await mod('modules/plans/plan.model.js');
+const { ClassSession, Booking } = await mod('modules/classes/class.model.js');
+const { DietPlan, Measurement } = await mod('modules/fitness/fitness.model.js');
+const { createSubscription } = await mod('modules/subscriptions/subscription.service.js');
+const { nextSeq } = await mod('utils/counter.js');
+const { ymd } = await mod('utils/dates.js');
+const owner = await User.findOne({ role: 'owner' });
+const plans = Object.fromEntries((await Plan.find().lean()).map((p) => [p.name, p]));
+const addMember = async (name, phone, extra = {}) => Member.create({ branchId: branch._id, memberCode: await nextSeq('memberCode', 1001), name, phone, ...extra });
+const ojas = await addMember('Ojas Edit', '9876511001');
+await createSubscription({ memberId: ojas._id, planId: plans.Quarterly._id, startDate: ymd(addDays(new Date(), -10)), payment: { amount: Math.round(450000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+const deepa = await addMember('Deepa Due', '9876511002');
+await createSubscription({ memberId: deepa._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -3)), payment: { amount: 100000, mode: 'cash' }, user: owner, allowBackdate: true });
+await addMember('Zara Remove', '9876511003');
+const tara = await addMember('Tara Fit', '9876511004', { portalEnabled: true, passwordHash: await hashPassword('Member@123') });
+await createSubscription({ memberId: tara._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -2)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+await Measurement.create({ memberId: tara._id, date: addDays(new Date(), -7), weightKg: 64.5, heightCm: 165, recordedBy: owner._id });
+await DietPlan.create({ name: 'Veg 1800 template', preference: 'veg', dailyCalories: 1800, meals: [{ name: 'Breakfast', time: '08:00', items: [{ food: 'Poha', quantity: '1 bowl', calories: 300 }] }] });
+await User.create({ name: 'Pat Password', email: 'pwd.test@gym.local', role: 'receptionist', passwordHash: await hashPassword('Staff@12345'), branchIds: [branch._id] });
+const priya = await Member.findOne({ phone: '9876500002' });
+const oneOff = async (name, capacity, startsAt) => {
+  const type = await ClassType.create({ name, color: '#ea580c', durationMin: 45, defaultCapacity: capacity });
+  return ClassSession.create({ branchId: branch._id, classTypeId: type._id, name, color: type.color, startsAt, endsAt: new Date(startsAt.getTime() + 45 * 60000), capacity });
+};
+const hiit = await oneOff('HIIT Drill', 10, new Date(Date.now() - 10 * 60000)); // started: attendance can be marked
+await Booking.create({ sessionId: hiit._id, memberId: priya._id, branchId: branch._id, status: 'booked', source: 'staff' });
+await ClassSession.updateOne({ _id: hiit._id }, { bookedCount: 1 });
+await oneOff('Pilates Open', 10, new Date(Date.now() + 2 * 3600000)); // upcoming: book / cancel booking / cancel class
+const spin = await oneOff('Spin Duo', 1, new Date(Date.now() + 3 * 3600000)); // full: member joins the waitlist
+await Booking.create({ sessionId: spin._id, memberId: priya._id, branchId: branch._id, status: 'booked', source: 'staff' });
+await ClassSession.updateOne({ _id: spin._id }, { bookedCount: 1 });
 console.log('E2E seed complete');
 await disconnectDb();

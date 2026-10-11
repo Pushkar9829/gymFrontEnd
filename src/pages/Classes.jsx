@@ -45,7 +45,7 @@ function SessionModal({ id, onClose }) {
   const { can, user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ['classes', 'session', id], queryFn: () => get(`/classes/sessions/${id}`) });
   const cancelBooking = useAction((bid) => post(`/classes/bookings/${bid}/cancel`), { success: 'Booking cancelled', invalidate: ['classes'] });
-  const mark = useAction(({ bid, status }) => post(`/classes/bookings/${bid}/attendance`, { status }), { invalidate: ['classes'] });
+  const mark = useAction(({ bid, status }) => post(`/classes/bookings/${bid}/attendance`, { status }), { success: (_d, v) => (v.status === 'attended' ? 'Marked present' : 'Marked as no-show'), invalidate: ['classes'] });
   const cancelClass = useAction((reason) => post(`/classes/sessions/${id}/cancel`, { reason }), { success: (d) => `Class cancelled. ${d.informed} member(s) informed.`, invalidate: ['classes'], onSuccess: onClose });
   if (isLoading) return null;
   const { session, bookings } = data;

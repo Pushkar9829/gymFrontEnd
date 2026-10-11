@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { toast } from 'sonner';
 import clsx from 'clsx';
 import { Plus, Minus, Search, ShoppingCart, Pencil, PackagePlus, FileText, Download, Trash2 } from 'lucide-react';
 import { get, post, put, openFile } from '../lib/api';
-import { useAction, useApi, useDefaultBranchId } from '../lib/hooks';
+import { useAction, useApi, useBranches, useDefaultBranchId } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, toPaise, toRupees, fmtDateTime, ymd, PAYMENT_MODES } from '../lib/format';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, StatCard, Table, Tabs, Toggle } from '../components/ui';
@@ -12,7 +13,13 @@ import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagin
 const CATEGORIES = ['supplement', 'beverage', 'snack', 'merchandise', 'accessory', 'other'];
 
 function Pos() {
-  const branchId = useDefaultBranchId();
+  // Sell from the branch picked in the top bar; in "all branches" view the cashier picks it here,
+  // so the stock shown is the stock of the branch the sale is taken from.
+  const defaultBranch = useDefaultBranchId();
+  const viewBranch = useAuth((s) => s.branchId);
+  const { data: branches } = useBranches();
+  const [pickedBranch, setPickedBranch] = useState('');
+  const branchId = viewBranch || pickedBranch || defaultBranch;
   const [q, setQ] = useState('');
   const [cart, setCart] = useState([]);
   const [memberQ, setMemberQ] = useState('');
@@ -20,7 +27,7 @@ function Pos() {
   const [discount, setDiscount] = useState('');
   const [mode, setMode] = useState('upi');
   const [last, setLast] = useState(null);
-  const { data: products } = useApi(['shop', 'products', 'pos'], '/shop/products', { active: 'true', search: q });
+  const { data: products } = useApi(['shop', 'products', 'pos'], '/shop/products', { active: 'true', search: q, branchId });
   const { data: members } = useQuery({ queryKey: ['pos-member', memberQ], queryFn: () => get('/members', { search: memberQ, limit: 5 }), enabled: memberQ.length >= 2 && !member });
 
   const add = (p) =>
@@ -99,6 +106,15 @@ function Pos() {
           </ul>
         )}
         <div className="mt-3 space-y-2">
+          {!viewBranch && branches?.length > 1 && (
+            <Select value={branchId} onChange={(e) => (setPickedBranch(e.target.value), setCart([]))} aria-label="Sell from branch">
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>
+                  Sell from: {b.name}
+                </option>
+              ))}
+            </Select>
+          )}
           {member ? (
             <p className="flex items-center justify-between rounded-lg bg-brand-50 px-3 py-2 text-sm">
               {member.name} (#{member.memberCode})
@@ -218,7 +234,11 @@ function ProductForm({ product, onClose }) {
 }
 
 function StockModal({ product, onClose }) {
-  const branchId = useDefaultBranchId();
+  const defaultBranch = useDefaultBranchId();
+  const viewBranch = useAuth((s) => s.branchId);
+  const { data: branches } = useBranches();
+  const [pickedBranch, setPickedBranch] = useState('');
+  const branchId = viewBranch || pickedBranch || defaultBranch;
   const [f, setF] = useState({ type: 'purchase', qty: '', unitCost: toRupees(product.costPrice), note: '' });
   const save = useAction(
     () => post(`/shop/products/${product._id}/stock`, { branchId, type: f.type, qty: Number(f.qty), unitCost: f.type === 'purchase' ? toPaise(f.unitCost) : undefined, note: f.note || undefined }),
@@ -227,7 +247,20 @@ function StockModal({ product, onClose }) {
   return (
     <Modal open onClose={onClose} title={`Stock · ${product.name}`} size="sm" footer={<Button disabled={!Number(f.qty)} loading={save.isPending} onClick={() => save.mutate()}>Save</Button>}>
       <div className="space-y-3">
-        <p className="text-sm text-slate-600">Current stock: {product.stock}</p>
+        <p className="text-sm text-slate-600">
+          Current stock{!viewBranch && branches?.length > 1 ? ' (all branches)' : ''}: {product.stock}
+        </p>
+        {!viewBranch && branches?.length > 1 && (
+          <Field label="Branch">
+            <Select value={branchId} onChange={(e) => setPickedBranch(e.target.value)}>
+              {branches.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
         <Field label="Type">
           <Select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
             <option value="purchase">Stock in (purchase)</option>
@@ -344,7 +377,7 @@ function Sales() {
                     <FileText className="size-4" />
                   </Button>
                   {r.status === 'paid' && can('payments.refund') && (
-                    <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => { const reason = window.prompt('Refund reason'); if (reason) refund.mutate({ id: r._id, reason }); }}>
+                    <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => { const reason = window.prompt('Refund reason'); if (reason === null) return; if (!reason.trim()) return toast.error('Please give a reason to refund'); refund.mutate({ id: r._id, reason: reason.trim() }); }}>
                       Refund
                     </Button>
                   )}

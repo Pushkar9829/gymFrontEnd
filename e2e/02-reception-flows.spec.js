@@ -101,7 +101,7 @@ test.describe.serial('reception', () => {
     const firstClass = page.locator('main button', { hasText: 'Yoga' }).first();
     await firstClass.click();
     await page.getByPlaceholder('Add member: name, phone or code').fill('Rahul');
-    await page.getByRole('dialog').getByRole('button', { name: 'Book' }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Book', exact: true }).first().click();
     await expect(page.getByText('Booked', { exact: true }).first()).toBeVisible();
     await shot(page, 'flow-reception-class-roster');
     await page.keyboard.press('Escape');

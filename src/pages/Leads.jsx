@@ -119,7 +119,7 @@ function LeadDrawer({ id, onClose }) {
                 <Button size="sm" variant="success" loading={convert.isPending} onClick={() => convert.mutate()}>
                   <UserCheck className="size-4" /> Convert to member
                 </Button>
-                <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => markLost.mutate(window.prompt('Why was this lead lost?') || 'Not interested')}>
+                <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => { const r = window.prompt('Why was this lead lost?'); if (r !== null) markLost.mutate(r.trim() || 'Not interested'); }}>
                   Mark lost
                 </Button>
               </div>

@@ -173,7 +173,7 @@ export default function MemberFitness({ member }) {
               { key: 'bf', label: 'Body fat', render: (m) => (m.bodyFatPercent ? `${m.bodyFatPercent}%` : '—') },
               { key: 'waist', label: 'Waist', render: (m) => (m.waistCm ? `${m.waistCm} cm` : '—') },
               { key: 'by', label: 'By', render: (m) => (m.recordedBy ? 'Trainer' : 'Member') },
-              { key: 'x', label: '', render: (m) => write && <Button size="sm" variant="ghost" onClick={() => remove.mutate(m._id)} aria-label="Delete"><Trash2 className="size-4" /></Button> },
+              { key: 'x', label: '', render: (m) => write && <Button size="sm" variant="ghost" onClick={() => window.confirm('Delete this measurement?') && remove.mutate(m._id)} aria-label="Delete measurement" title="Delete"><Trash2 className="size-4" /></Button> },
             ]}
           />
         </div>

@@ -19,6 +19,15 @@ export function ClockButton() {
         <Clock className="size-4" /> Clock in
       </Button>
     );
+  if (data.checkOutAt)
+    return (
+      <span className="flex items-center gap-1.5 px-2 text-sm text-slate-500" title="One shift per day is recorded">
+        <Clock className="size-4" />
+        <span className="hidden sm:inline">
+          Shift done · {fmtTime(data.checkInAt)}–{fmtTime(data.checkOutAt)}
+        </span>
+      </span>
+    );
   return (
     <Button size="sm" variant="ghost" loading={clockOut.isPending} onClick={() => clockOut.mutate()} title={`In since ${fmtTime(data.checkInAt)}`}>
       <Clock className="size-4 text-emerald-600" />
