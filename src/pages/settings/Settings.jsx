@@ -195,6 +195,7 @@ function Staff() {
           { key: 'name', label: 'Name', render: (u) => <b>{u.name}</b> },
           { key: 'email', label: 'Email' },
           { key: 'role', label: 'Role', render: (u) => <span className="capitalize">{u.role}</span> },
+          { key: 'pin', label: 'Device ID', render: (u) => (u.devicePin ? <code>{u.devicePin}</code> : '—') },
           { key: 'b', label: 'Branches', render: (u) => (u.role === 'owner' ? 'All' : u.branchIds.map(bName).join(', ')) },
           { key: 'status', label: 'Status', render: (u) => <Badge status={u.isActive ? 'allow' : 'cancelled'}>{u.isActive ? 'Active' : 'Disabled'}</Badge> },
           { key: 'last', label: 'Last login', className: 'hidden md:table-cell', render: (u) => fmtDateTime(u.lastLoginAt) },

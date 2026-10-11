@@ -10,6 +10,7 @@ import { useBranches, useApi, useAction } from '../lib/hooks';
 import { post } from '../lib/api';
 import { fromNow } from '../lib/format';
 import { Avatar, PageLoader, Select } from '../components/ui';
+import { ClockButton } from '../pages/StaffAttendance';
 
 const NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, perm: 'dashboard.read' },
@@ -169,6 +170,7 @@ export default function AdminLayout() {
             <Menu className="size-5" />
           </button>
           <div className="flex-1" />
+          <ClockButton />
           <BranchSwitcher />
           <Notifications />
           <div className="flex items-center gap-2">

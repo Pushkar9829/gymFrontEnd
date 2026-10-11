@@ -8,7 +8,7 @@ import { inr, toPaise, toRupees } from '../lib/format';
 import Coupons from './Coupons';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PageLoader, Select, Textarea, Toggle } from '../components/ui';
 
-const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, isActive: true };
+const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, accessStart: '', accessEnd: '', deviceTimezoneId: 1, isActive: true };
 
 function PlanForm({ plan, onClose }) {
   const [f, setF] = useState(
@@ -33,6 +33,9 @@ function PlanForm({ plan, onClose }) {
       taxPercent: f.taxPercent === '' ? null : Number(f.taxPercent),
       freezeDaysAllowed: Number(f.freezeDaysAllowed),
       maxFreezes: Number(f.maxFreezes),
+      accessStart: f.accessStart || null,
+      accessEnd: f.accessEnd || null,
+      deviceTimezoneId: Number(f.deviceTimezoneId) || 1,
       isActive: f.isActive,
     });
   return (
@@ -79,6 +82,17 @@ function PlanForm({ plan, onClose }) {
         <Field label="Max number of freezes">
           <Input type="number" min="0" value={f.maxFreezes} onChange={set('maxFreezes')} />
         </Field>
+        <Field label="Entry from (optional)" hint="Time-slot plan, e.g. morning only">
+          <Input type="time" value={f.accessStart || ''} onChange={set('accessStart')} />
+        </Field>
+        <Field label="Entry until">
+          <Input type="time" value={f.accessEnd || ''} onChange={set('accessEnd')} />
+        </Field>
+        {f.accessStart && (
+          <Field label="Device access time-zone no." hint="The time-zone number set up on the biometric device for this slot" className="sm:col-span-2">
+            <Input type="number" min="1" max="50" value={f.deviceTimezoneId ?? 1} onChange={set('deviceTimezoneId')} />
+          </Field>
+        )}
         <Field label="Description" className="sm:col-span-2">
           <Textarea value={f.description || ''} onChange={set('description')} />
         </Field>
@@ -129,6 +143,7 @@ export default function Plans() {
                 {p.joiningFee > 0 && <li>+ {inr(p.joiningFee)} joining fee</li>}
                 <li>GST {p.taxPercent ?? 'default'}{p.taxPercent != null && '%'}</li>
                 <li>{p.freezeDaysAllowed ? `${p.freezeDaysAllowed} freeze days (max ${p.maxFreezes}×)` : 'No freeze'}</li>
+                {p.accessStart && <li className="text-indigo-700">Entry {p.accessStart}–{p.accessEnd} only</li>}
               </ul>
               {can('plans.write') && (
                 <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(p)}>

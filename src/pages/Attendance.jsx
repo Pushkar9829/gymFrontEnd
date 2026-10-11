@@ -5,6 +5,7 @@ import { useApi } from '../lib/hooks';
 import { openFile } from '../lib/api';
 import { fmtDateTime, fmtTime, ymd } from '../lib/format';
 import { useAuth } from '../store/auth';
+import StaffAttendance from './StaffAttendance';
 import { Avatar, Badge, Button, Card, EmptyState, Input, PageHeader, Pagination, Select, Spinner, Table, Tabs } from '../components/ui';
 
 function Live() {
@@ -131,11 +132,13 @@ export default function Attendance() {
           { value: 'live', label: 'In gym now' },
           { value: 'visits', label: 'Visits' },
           { value: 'log', label: 'Entry log' },
+          { value: 'staff', label: 'Staff' },
         ]}
       />
       {tab === 'live' && <Live />}
       {tab === 'visits' && <Visits />}
       {(tab === 'log' || tab === 'denied') && <EntryLog initialResult={tab === 'denied' ? 'deny' : ''} />}
+      {tab === 'staff' && <StaffAttendance />}
     </div>
   );
 }

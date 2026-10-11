@@ -24,6 +24,7 @@ const PersonalTraining = lazy(() => import('./pages/PersonalTraining'));
 const FitnessLibrary = lazy(() => import('./pages/fitness/FitnessLibrary'));
 const PortalFitness = lazy(() => import('./pages/portal/PortalFitness'));
 const Classes = lazy(() => import('./pages/Classes'));
+const Join = lazy(() => import('./pages/Join'));
 const PortalClasses = lazy(() => import('./pages/portal/PortalClasses'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/admin" replace /> },
   { path: '/login', element: <Login /> },
   { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/join', element: s(<Join />) },
   {
     path: '/admin',
     element: <AdminLayout />,

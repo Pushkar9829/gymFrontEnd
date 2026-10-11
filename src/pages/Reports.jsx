@@ -188,11 +188,34 @@ function LeadsReport({ from, to }) {
   );
 }
 
+function Branches({ from, to }) {
+  const { data } = useApi('report-branches', '/reports/branches', { from, to, branchId: '' });
+  return (
+    <Card title="Branch comparison" padded={false}>
+      <Table
+        rowKey="branchId"
+        rows={data?.rows}
+        empty={<EmptyState title="No branches" />}
+        columns={[
+          { key: 'name', label: 'Branch', render: (r) => <b>{r.name}</b> },
+          { key: 'a', label: 'Active members', render: (r) => r.activeMembers },
+          { key: 'n', label: 'New', render: (r) => r.newMembers },
+          { key: 'v', label: 'Visits', render: (r) => r.visits },
+          { key: 'c', label: 'Collected', render: (r) => inr(r.collected) },
+          { key: 'e', label: 'Expenses', render: (r) => inr(r.expenses) },
+          { key: 'p', label: 'Profit', render: (r) => <span className={r.profit < 0 ? 'text-rose-600' : 'text-emerald-700'}>{inr(r.profit)}</span> },
+          { key: 'd', label: 'Dues', render: (r) => inr(r.dues) },
+        ]}
+      />
+    </Card>
+  );
+}
+
 export default function Reports() {
   const [tab, setTab] = useState('finance');
   const [from, setFrom] = useState(ymd(dayjs().startOf('month')));
   const [to, setTo] = useState(ymd());
-  const ranged = ['finance', 'attendance', 'leads'].includes(tab);
+  const ranged = ['finance', 'attendance', 'leads', 'branches'].includes(tab);
   return (
     <div>
       <PageHeader title="Reports" />
@@ -205,6 +228,7 @@ export default function Reports() {
           { value: 'memberships', label: 'Expiring / expired' },
           { value: 'attendance', label: 'Attendance' },
           { value: 'leads', label: 'Leads' },
+          { value: 'branches', label: 'Branches' },
         ]}
       />
       {ranged && <Range from={from} to={to} setFrom={setFrom} setTo={setTo} />}
@@ -213,6 +237,7 @@ export default function Reports() {
       {tab === 'memberships' && <Memberships />}
       {tab === 'attendance' && <AttendanceReport from={from} to={to} />}
       {tab === 'leads' && <LeadsReport from={from} to={to} />}
+      {tab === 'branches' && <Branches from={from} to={to} />}
     </div>
   );
 }

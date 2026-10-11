@@ -14,6 +14,7 @@ import { inr, fmtDate, fmtDateTime, fmtTime, daysUntil } from '../../lib/format'
 import { Avatar, Badge, Button, Card, EmptyState, Modal, PageLoader, Table, Tabs, Toggle } from '../../components/ui';
 import MemberForm from './MemberForm';
 import MemberPt from './MemberPt';
+import MemberDocuments from './MemberDocuments';
 import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 
@@ -295,6 +296,7 @@ export default function MemberDetail() {
         </Card>
         <div className="space-y-4">
           <AccessBanner access={access} member={member} />
+          <MemberDocuments member={member} />
           <Card title="Details">
             <dl className="space-y-1.5 text-sm">
               {[
