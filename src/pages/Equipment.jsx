@@ -10,6 +10,7 @@ import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Selec
 
 const CATEGORIES = ['cardio', 'strength-machine', 'free-weights', 'rack-bench', 'functional', 'other'];
 const STATUS_BADGE = { working: 'allow', 'needs-repair': 'upcoming', 'out-of-order': 'deny', retired: 'cancelled' };
+const STATUS_TEXT = { working: 'Working', 'needs-repair': 'Needs repair', 'out-of-order': 'Out of order', retired: 'Retired' };
 
 function EquipmentForm({ item, onClose }) {
   const { data: branches } = useBranches();
@@ -90,7 +91,9 @@ function EquipmentForm({ item, onClose }) {
           <Field label="Status">
             <Select value={f.status} onChange={set('status')}>
               {Object.keys(STATUS_BADGE).map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>
+                {STATUS_TEXT[s]}
+              </option>
               ))}
             </Select>
           </Field>
@@ -202,7 +205,9 @@ export default function EquipmentPage() {
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-auto">
             <option value="">All (except retired)</option>
             {Object.keys(STATUS_BADGE).map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>
+                {STATUS_TEXT[s]}
+              </option>
             ))}
           </Select>
         </div>
@@ -212,7 +217,7 @@ export default function EquipmentPage() {
           columns={[
             { key: 'n', label: 'Equipment', render: (e) => <span><b>{e.name}</b><span className="block text-xs text-slate-500">{[e.brand, e.model, e.location].filter(Boolean).join(' · ')}</span></span> },
             { key: 'c', label: 'Category', render: (e) => e.category },
-            { key: 's', label: 'Status', render: (e) => <span><Badge status={STATUS_BADGE[e.status]}>{e.status}</Badge>{e.issue && <span className="block max-w-48 truncate text-xs text-slate-500">{e.issue}</span>}</span> },
+            { key: 's', label: 'Status', render: (e) => <span><Badge status={STATUS_BADGE[e.status]}>{STATUS_TEXT[e.status]}</Badge>{e.issue && <span className="block max-w-48 truncate text-xs text-slate-500">{e.issue}</span>}</span> },
             {
               key: 'due',
               label: 'Next service',

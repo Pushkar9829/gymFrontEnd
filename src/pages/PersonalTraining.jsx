@@ -246,7 +246,7 @@ function Packages() {
           { key: 'p', label: 'Price', render: (p) => inr(p.price) },
           { key: 'per', label: 'Per session', render: (p) => inr(Math.round(p.price / p.sessions)) },
           { key: 'a', label: 'Status', render: (p) => <Badge status={p.isActive ? 'allow' : 'cancelled'}>{p.isActive ? 'On sale' : 'Off'}</Badge> },
-          { key: 'e', label: '', render: (p) => can('pt.manage') && <Button size="sm" variant="ghost" onClick={() => setEdit(p)}><Pencil className="size-4" /></Button> },
+          { key: 'e', label: '', render: (p) => can('pt.manage') && <Button size="sm" variant="ghost" aria-label="Edit package" title="Edit" onClick={() => setEdit(p)}><Pencil className="size-4" /></Button> },
         ]}
       />
       {edit && <PackageForm pkg={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}

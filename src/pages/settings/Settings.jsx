@@ -20,6 +20,7 @@ function GymSettings() {
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const setS = (k, v) => setF({ ...f, settings: { ...f.settings, [k]: v } });
   const editable = can('settings.write');
+  const dirty = JSON.stringify(f) !== JSON.stringify({ ...data, settings: { ...data.settings, reminderDays: (data.settings?.reminderDays || []).join(', ') } });
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -69,35 +70,38 @@ function GymSettings() {
           <Toggle checked={!!f.settings.channels?.sms} onChange={(v) => setS('channels', { ...f.settings.channels, sms: v })} disabled={!editable} label="Send SMS (reminders, receipts, login codes)" />
           <Toggle checked={!!f.settings.channels?.whatsapp} onChange={(v) => setS('channels', { ...f.settings.channels, whatsapp: v })} disabled={!editable} label="Send WhatsApp messages" />
           <Toggle checked={f.settings.memberOtpLogin !== false} onChange={(v) => setS('memberOtpLogin', v)} disabled={!editable} label="Members can log in with a one-time code" />
-          {editable && (
-            <Button
-              loading={save.isPending}
-              onClick={() =>
-                save.mutate({
-                  name: f.name,
-                  gstin: f.gstin || '',
-                  address: f.address || '',
-                  phone: f.phone || '',
-                  email: f.email || '',
-                  taxPercent: Number(f.taxPercent),
-                  invoicePrefix: f.invoicePrefix,
-                  settings: {
-                    graceDays: Number(f.settings.graceDays),
-                    blockOnDues: f.settings.blockOnDues,
-                    sendEmails: f.settings.sendEmails,
-                    channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp },
-                    memberOtpLogin: f.settings.memberOtpLogin !== false,
-                    reminderDays: String(f.settings.reminderDays).split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
-                  },
-                })
-              }
-            >
-              Save settings
-            </Button>
-          )}
           <p className="text-xs text-slate-500">Changing entry rules re-checks every member and updates the biometric devices immediately.</p>
         </div>
       </Card>
+      {editable && (
+        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 rounded-xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-200 backdrop-blur lg:col-span-2">
+          <span className="text-sm text-slate-500">{dirty ? 'You have unsaved changes' : 'All changes saved'}</span>
+          <Button
+          loading={save.isPending}
+          onClick={() =>
+            save.mutate({
+              name: f.name,
+              gstin: f.gstin || '',
+              address: f.address || '',
+              phone: f.phone || '',
+              email: f.email || '',
+              taxPercent: Number(f.taxPercent),
+              invoicePrefix: f.invoicePrefix,
+              settings: {
+                graceDays: Number(f.settings.graceDays),
+                blockOnDues: f.settings.blockOnDues,
+                sendEmails: f.settings.sendEmails,
+                channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp },
+                memberOtpLogin: f.settings.memberOtpLogin !== false,
+                reminderDays: String(f.settings.reminderDays).split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
+              },
+            })
+          }
+        >
+          Save settings
+        </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -125,7 +129,7 @@ function Branches() {
           { key: 'code', label: 'Code' },
           { key: 'hours', label: 'Hours', render: (b) => `${b.openingTime} – ${b.closingTime}` },
           { key: 'phone', label: 'Phone', render: (b) => b.phone || '—' },
-          { key: 'a', label: '', render: (b) => can('branches.write') && <Button size="sm" variant="ghost" onClick={() => setEdit(b)}><Pencil className="size-4" /></Button> },
+          { key: 'a', label: '', render: (b) => can('branches.write') && <Button size="sm" variant="ghost" aria-label="Edit branch" title="Edit" onClick={() => setEdit(b)}><Pencil className="size-4" /></Button> },
         ]}
       />
       {edit && <BranchForm branch={edit} onClose={() => setEdit(null)} />}
@@ -201,7 +205,7 @@ function Staff() {
           { key: 'b', label: 'Branches', render: (u) => (u.role === 'owner' ? 'All' : u.branchIds.map(bName).join(', ')) },
           { key: 'status', label: 'Status', render: (u) => <Badge status={u.isActive ? 'allow' : 'cancelled'}>{u.isActive ? 'Active' : 'Disabled'}</Badge> },
           { key: 'last', label: 'Last login', className: 'hidden md:table-cell', render: (u) => fmtDateTime(u.lastLoginAt) },
-          { key: 'a', label: '', render: (u) => can('users.write') && u._id !== user._id && <Button size="sm" variant="ghost" onClick={() => setEdit({ ...u, password: '' })}><Pencil className="size-4" /></Button> },
+          { key: 'a', label: '', render: (u) => can('users.write') && u._id !== user._id && <Button size="sm" variant="ghost" aria-label="Edit staff" title="Edit" onClick={() => setEdit({ ...u, password: '' })}><Pencil className="size-4" /></Button> },
         ]}
       />
       {edit && <StaffForm staff={edit} onClose={() => setEdit(null)} />}
@@ -366,7 +370,19 @@ function AuditLog() {
 
 export default function Settings() {
   const can = useAuth((s) => s.can);
-  const [tab, setTab] = useState('gym');
+  const full = can('users.read');
+  const [tab, setTab] = useState(full ? 'gym' : 'me');
+  if (!full)
+    return (
+      <div>
+        <PageHeader title="My account" subtitle="Your password, payslips and signed-in devices" />
+        <div className="space-y-4">
+          <ChangePassword />
+          <MyPayslips />
+          <Sessions />
+        </div>
+      </div>
+    );
   return (
     <div>
       <PageHeader title="Settings" />

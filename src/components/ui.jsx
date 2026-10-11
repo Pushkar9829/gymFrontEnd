@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
-import clsx from 'clsx';
+import clsxBase from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import { Loader2, X, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { STATUS_STYLES, STATUS_LABEL, initials } from '../lib/format';
+
+// Later classes win (e.g. a caller's w-auto beats the default w-full).
+const clsx = (...a) => twMerge(clsxBase(...a));
 
 export function Button({ variant = 'primary', size = 'md', loading, className, children, disabled, ...props }) {
   return (

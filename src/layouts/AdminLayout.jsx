@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useLocation, useNavigate } from 'react-route
 import clsx from 'clsx';
 import {
   LayoutDashboard, Users, ScanLine, CalendarCheck, CreditCard, Tags, UserPlus, Wallet, BarChart3,
-  Fingerprint, Settings, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench,
+  Fingerprint, Settings, UserCog, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useBranches, useApi, useAction } from '../lib/hooks';
@@ -13,46 +13,54 @@ import { Avatar, PageLoader, Select } from '../components/ui';
 import { ClockButton } from '../pages/StaffAttendance';
 
 const NAV = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, perm: 'dashboard.read' },
+  { section: 'Daily', to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, perm: 'dashboard.read' },
   { to: '/admin/check-in', label: 'Check-in', icon: ScanLine, perm: 'attendance.write' },
   { to: '/admin/members', label: 'Members', icon: Users, perm: 'members.read' },
   { to: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, perm: 'attendance.read' },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard, perm: 'payments.read' },
-  { to: '/admin/classes', label: 'Classes', icon: CalendarDays, perm: 'classes.read' },
+  { section: 'Training', to: '/admin/classes', label: 'Classes', icon: CalendarDays, perm: 'classes.read' },
   { to: '/admin/pt', label: 'Personal training', icon: HeartPulse, perm: 'pt.read' },
   { to: '/admin/fitness', label: 'Workouts & diet', icon: Salad, perm: 'fitness.read' },
-  { to: '/admin/leads', label: 'Leads', icon: UserPlus, perm: 'leads.read' },
+  { section: 'Sales', to: '/admin/leads', label: 'Leads', icon: UserPlus, perm: 'leads.read' },
   { to: '/admin/messages', label: 'Messages', icon: MessageSquare, perm: 'members.write' },
   { to: '/admin/plans', label: 'Plans & coupons', icon: Tags, perm: 'plans.read' },
   { to: '/admin/shop', label: 'Shop', icon: Store, perm: 'shop.sell' },
-  { to: '/admin/expenses', label: 'Expenses', icon: Wallet, perm: 'expenses.read' },
+  { section: 'Money', to: '/admin/expenses', label: 'Expenses', icon: Wallet, perm: 'expenses.read' },
   { to: '/admin/payroll', label: 'Payroll', icon: Banknote, perm: 'payroll.manage' },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3, perm: 'reports.read' },
-  { to: '/admin/equipment', label: 'Equipment', icon: Wrench, perm: 'equipment.read' },
+  { section: 'Gym setup', to: '/admin/equipment', label: 'Equipment', icon: Wrench, perm: 'equipment.read' },
   { to: '/admin/devices', label: 'Biometric devices', icon: Fingerprint, perm: 'devices.read' },
-  { to: '/admin/settings', label: 'Settings', icon: Settings, perm: 'users.read' },
+  // Everyone needs their own account (password, payslips); only managers see full settings.
+  { to: '/admin/settings', label: 'Settings', icon: Settings, perm: 'users.read', otherwise: { label: 'My account', icon: UserCog } },
 ];
+// Every item inherits the section of the item above it.
+NAV.reduce((sec, n) => (n.section ||= sec), null);
 
 function Sidebar({ onNavigate }) {
   const can = useAuth((s) => s.can);
+  const items = NAV.flatMap((n) => (can(n.perm) ? [n] : n.otherwise ? [{ ...n, ...n.otherwise }] : []));
+  // Headings only help on a long menu (owner/manager), not a trainer's few items.
+  const grouped = items.length > 6;
   return (
-    <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
-      {NAV.filter((n) => can(n.perm)).map(({ to, label, icon: Icon, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            clsx(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-              isActive ? 'bg-brand-700 text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white',
-            )
-          }
-        >
-          <Icon className="size-[18px]" />
-          {label}
-        </NavLink>
+    <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2">
+      {items.map(({ to, label, icon: Icon, end, section }, i) => (
+        <div key={to}>
+          {grouped && section !== items[i - 1]?.section && <p className="mt-3 mb-1 px-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">{section}</p>}
+          <NavLink
+            to={to}
+            end={end}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              clsx(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
+                isActive ? 'bg-brand-700 text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white',
+              )
+            }
+          >
+            <Icon className="size-[18px]" />
+            {label}
+          </NavLink>
+        </div>
       ))}
     </nav>
   );
@@ -132,7 +140,7 @@ export default function AdminLayout() {
 
   const sidebar = (
     <>
-      <div className="flex items-center gap-2 px-5 py-5 text-white">
+      <div className="flex items-center gap-2 px-5 py-4 text-white">
         <span className="rounded-lg bg-brand-600 p-1.5">
           <Dumbbell className="size-5" />
         </span>

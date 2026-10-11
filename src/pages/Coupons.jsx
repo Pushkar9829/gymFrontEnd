@@ -113,7 +113,7 @@ export default function Coupons() {
           { key: 'valid', label: 'Valid', render: (c) => (c.validTo ? `till ${fmtDate(c.validTo)}` : 'No expiry') },
           { key: 'uses', label: 'Used', render: (c) => `${c.usedCount}${c.maxUses ? ` / ${c.maxUses}` : ''}` },
           { key: 'st', label: 'Status', render: (c) => <Badge status={c.isActive ? 'allow' : 'cancelled'}>{c.isActive ? 'Active' : 'Off'}</Badge> },
-          { key: 'e', label: '', render: (c) => can('plans.write') && <Button size="sm" variant="ghost" onClick={() => setEdit(c)}><Pencil className="size-4" /></Button> },
+          { key: 'e', label: '', render: (c) => can('plans.write') && <Button size="sm" variant="ghost" aria-label="Edit coupon" title="Edit" onClick={() => setEdit(c)}><Pencil className="size-4" /></Button> },
         ]}
       />
       {edit && <CouponForm coupon={edit === 'new' ? null : edit} plans={plans} onClose={() => setEdit(null)} />}

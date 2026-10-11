@@ -1,14 +1,62 @@
 import { useNavigate } from 'react-router';
-import { Users, Snowflake, AlarmClock, UserX, ScanLine, ShieldX, IndianRupee, Wallet, PhoneCall, Fingerprint } from 'lucide-react';
+import { Users, Snowflake, CalendarDays, HeartPulse, AlarmClock, UserX, ScanLine, ShieldX, IndianRupee, Wallet, PhoneCall, Fingerprint } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import dayjs from 'dayjs';
 import { useApi } from '../lib/hooks';
-import { inr, fromNow } from '../lib/format';
+import { inr, fromNow, fmtTime, ymd } from '../lib/format';
+import { useAuth } from '../store/auth';
 import { Card, PageHeader, PageLoader, StatCard, Button } from '../components/ui';
+
+// A trainer's day: their classes today and PT clients with sessions left.
+function TrainerDay() {
+  const navigate = useNavigate();
+  const today = ymd();
+  const { data: classes } = useApi(['classes', 'sessions', 'mine'], '/classes/sessions', { from: today, to: today, mine: true });
+  const { data: pt } = useApi(['pt', 'purchases', 'mine'], '/pt/purchases', { state: 'active', limit: 8 });
+  return (
+    <div className="mb-5 grid gap-4 lg:grid-cols-2">
+      <Card title="My classes today" actions={<Button size="sm" variant="secondary" onClick={() => navigate('/admin/classes')}>Timetable</Button>}>
+        {classes?.length ? (
+          <ul className="space-y-2 text-sm">
+            {classes.map((c) => (
+              <li key={c._id} className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2">
+                  <CalendarDays className="size-4 text-slate-400" />
+                  {fmtTime(c.startsAt)} · {c.name}
+                </span>
+                <span className="text-slate-500">{c.status === 'cancelled' ? 'Cancelled' : `${c.bookedCount}/${c.capacity} booked`}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-500">No classes for you today.</p>
+        )}
+      </Card>
+      <Card title="My PT clients" actions={<Button size="sm" variant="secondary" onClick={() => navigate('/admin/pt')}>Log a session</Button>}>
+        {pt?.items?.length ? (
+          <ul className="space-y-2 text-sm">
+            {pt.items.map((p) => (
+              <li key={p._id} className="flex items-center justify-between gap-3">
+                <button className="flex items-center gap-2 font-medium text-brand-700 hover:underline" onClick={() => navigate(`/admin/members/${p.memberId?._id}`)}>
+                  <HeartPulse className="size-4 text-slate-400" />
+                  {p.memberId?.name}
+                </button>
+                <span className="text-slate-500">{p.sessionsTotal - p.sessionsUsed} sessions left</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-500">No active PT clients.</p>
+        )}
+      </Card>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { data, isLoading } = useApi('dashboard', '/reports/dashboard', {}, { refetchInterval: 60000 });
   const navigate = useNavigate();
+  const { can, user } = useAuth();
   if (isLoading || !data) return <PageLoader />;
   const { members, attendance, money, followUpsDue, alerts, devices } = data;
 
@@ -18,11 +66,15 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle={dayjs().format('dddd, DD MMMM YYYY')}
         actions={
-          <Button onClick={() => navigate('/admin/check-in')}>
-            <ScanLine className="size-4" /> Check-in
-          </Button>
+          can('attendance.write') && (
+            <Button onClick={() => navigate('/admin/check-in')}>
+              <ScanLine className="size-4" /> Check-in
+            </Button>
+          )
         }
       />
+
+      {user.role === 'trainer' && <TrainerDay />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Active members" value={members.active} icon={Users} tone="green" onClick={() => navigate('/admin/members?status=active')} />
@@ -37,7 +89,10 @@ export default function Dashboard() {
 
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
         <Card title="Check-ins (last 14 days)" className="lg:col-span-2">
-          <div className="h-64">
+          <div className="relative h-64">
+            {!attendance.last14Days.some((d) => d.count) && (
+              <p className="absolute inset-0 z-10 flex items-center justify-center text-sm text-slate-500">No check-ins in the last 14 days yet.</p>
+            )}
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={attendance.last14Days.map((d) => ({ ...d, label: dayjs(d.day).format('DD MMM') }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />

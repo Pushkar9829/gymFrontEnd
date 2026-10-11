@@ -177,7 +177,7 @@ export function MyPayslips() {
           { key: 'm', label: 'Month', render: (p) => dayjs(`${p.month}-01`).format('MMMM YYYY') },
           { key: 'n', label: 'Net pay', render: (p) => inr(p.netPay) },
           { key: 's', label: 'Status', render: (p) => <Badge status={STATUS[p.status]}>{p.status}</Badge> },
-          { key: 'pdf', label: '', render: (p) => <Button size="sm" variant="ghost" onClick={() => openFile(`/payroll/mine/${p._id}/pdf`)}><FileText className="size-4" /></Button> },
+          { key: 'pdf', label: '', render: (p) => <Button size="sm" variant="ghost" aria-label="Download payslip" title="Payslip PDF" onClick={() => openFile(`/payroll/mine/${p._id}/pdf`)}><FileText className="size-4" /></Button> },
         ]}
       />
     </Card>
