@@ -31,8 +31,7 @@ export default function PortalHome() {
         <p className="mt-1 text-sm text-white/90">{access.reason}</p>
         {access.validTo && (
           <p className="mt-3 text-sm">
-            Valid till <b>{fmtDate(access.validTo)}</b>
-            {access.daysLeft != null && ` · ${access.daysLeft} day(s) left`}
+            {access.membershipStatus === 'upcoming' ? 'Valid from' : 'Valid till'} <b>{fmtDate(access.membershipStatus === 'upcoming' ? access.validFrom : access.validTo)}</b>
           </p>
         )}
         {member.dueAmount > 0 && <p className="mt-1 rounded-lg bg-white/15 px-2 py-1 text-sm">Pending payment: {inr(member.dueAmount)}</p>}
