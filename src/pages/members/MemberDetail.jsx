@@ -15,6 +15,7 @@ import { Avatar, Badge, Button, Card, EmptyState, Modal, PageLoader, Table, Tabs
 import MemberForm from './MemberForm';
 import MemberPt from './MemberPt';
 import MemberDocuments from './MemberDocuments';
+import MemberAutopay from './MemberAutopay';
 import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 
@@ -300,6 +301,7 @@ export default function MemberDetail() {
         </Card>
         <div className="space-y-4">
           <AccessBanner access={access} member={member} />
+          <MemberAutopay member={member} />
           <MemberDocuments member={member} />
           <Card title="Details">
             <dl className="space-y-1.5 text-sm">
@@ -310,6 +312,7 @@ export default function MemberDetail() {
                 ['Emergency', member.emergencyContact?.name && `${member.emergencyContact.name} (${member.emergencyContact.relation || '-'}) ${member.emergencyContact.phone || ''}`],
                 ['Health notes', member.healthNotes],
                 ['Last visit', member.lastVisitAt && fmtDateTime(member.lastVisitAt)],
+                ['RFID card', member.cardNo],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
                   <dt className="w-28 shrink-0 text-slate-500">{k}</dt>

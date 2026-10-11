@@ -23,6 +23,7 @@ const schema = z.object({
   trainerId: z.string().optional(),
   source: z.string().optional(),
   companyId: z.string().optional(),
+  cardNo: z.union([z.literal(''), z.string().regex(/^\d{4,20}$/, 'Digits only (4-20)')]).optional(),
   photoUrl: z.string().optional(),
 });
 
@@ -49,6 +50,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       trainerId: member?.trainerId?._id || member?.trainerId || '',
       source: member?.source || 'walk-in',
       companyId: member?.companyId?._id || member?.companyId || '',
+      cardNo: member?.cardNo || '',
       photoUrl: member?.photoUrl || '',
     },
   });
@@ -76,6 +78,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       photoUrl: v.photoUrl,
       trainerId: v.trainerId || null,
       companyId: v.companyId || null,
+      cardNo: v.cardNo || null,
       emergencyContact: { name: v.ecName, phone: v.ecPhone, relation: v.ecRelation },
     };
     save.mutate(body);
@@ -162,6 +165,9 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
             </Select>
           </Field>
         )}
+        <Field label="RFID card no." error={errors.cardNo?.message} hint="Tap the card on the USB reader with this box selected">
+          <Input {...register('cardNo')} inputMode="numeric" />
+        </Field>
         <Field label="Address" className="sm:col-span-2">
           <Input {...register('address')} />
         </Field>

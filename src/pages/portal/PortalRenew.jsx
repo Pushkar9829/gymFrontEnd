@@ -99,6 +99,24 @@ export default function PortalRenew() {
             Pay {quote ? inr(quote.totalAmount, { decimals: true }) : ''}
           </Button>
           <p className="mt-2 text-center text-xs text-slate-500">UPI, cards and netbanking via Razorpay. Your membership starts right after your current one ends.</p>
+          {plans.find((p) => p._id === planId)?.durationUnit === 'month' && (
+            <button
+              className="mt-3 w-full text-center text-sm font-medium text-brand-700"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const r = await portalPost('/me/autopay', { planId });
+                  window.location.href = r.shortUrl;
+                } catch (err) {
+                  toast.error(errorMessage(err));
+                  setBusy(false);
+                }
+              }}
+            >
+              Or set up autopay: renew automatically every month
+            </button>
+          )}
         </Card>
       )}
     </div>

@@ -107,7 +107,20 @@ export default function CheckIn() {
           <Card>
             <div className="relative">
               <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-slate-400" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, phone or member code" className="pl-9" autoFocus />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => {
+                  // USB RFID readers type the card number and press Enter.
+                  if (e.key === 'Enter' && /^\d{6,20}$/.test(q.trim())) {
+                    submit({ cardNo: q.trim() });
+                    setQ('');
+                  }
+                }}
+                placeholder="Name, phone, member code, or tap RFID card"
+                className="pl-9"
+                autoFocus
+              />
             </div>
             <ul className="mt-3 divide-y divide-slate-100">
               {found?.items?.map((m) => (

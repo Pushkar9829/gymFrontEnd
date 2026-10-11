@@ -16,6 +16,8 @@ export default function PortalHome() {
   const { data, isLoading } = useQuery({ queryKey: ['portal'], queryFn: () => portalGet('/me') });
   const { data: cfg } = useQuery({ queryKey: ['portal', 'paycfg'], queryFn: () => portalGet('/me/pay/config') });
   const { data: pt } = useQuery({ queryKey: ['portal', 'pt'], queryFn: () => portalGet('/me/pt') });
+  const { data: autopay } = useQuery({ queryKey: ['portal', 'autopay'], queryFn: () => portalGet('/me/autopay') });
+  const autopayOn = autopay && ['created', 'authenticated', 'active', 'pending', 'halted', 'paused'].includes(autopay.status);
   const activePt = (pt?.purchases || []).filter((p) => p.status === 'active' && p.sessionsUsed < p.sessionsTotal && new Date(p.validTo) >= new Date(new Date().toDateString()));
   const qc = useQueryClient();
   const [paying, setPaying] = useState(null);
@@ -59,6 +61,16 @@ export default function PortalHome() {
           </p>
         )}
         {member.dueAmount > 0 && <p className="mt-1 rounded-lg bg-white/15 px-2 py-1 text-sm">Pending payment: {inr(member.dueAmount)}</p>}
+        {autopayOn && (
+          <p className="mt-1 text-sm text-white/90">
+            Autopay {autopay.status === 'created' ? 'waiting for your approval' : autopay.status}: {autopay.planId?.name}, {inr(autopay.amount)} per cycle
+            {autopay.status === 'created' && autopay.shortUrl && (
+              <a href={autopay.shortUrl} className="ml-1 underline">
+                Approve
+              </a>
+            )}
+          </p>
+        )}
         {cfg?.enabled && (
           <Link to="/portal/renew" className="mt-3 inline-block rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-brand-800">
             {ok ? 'Renew / extend' : 'Renew now'}
