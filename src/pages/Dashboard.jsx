@@ -116,6 +116,22 @@ export default function Dashboard() {
                   {followUpsDue}
                 </button>
               </li>
+              {data.openComplaints != null && (
+                <li className="flex items-center justify-between">
+                  <span className="text-slate-600">Open complaints</span>
+                  <button className={data.openComplaints ? 'font-semibold text-rose-600 hover:underline' : 'font-semibold text-brand-700 hover:underline'} onClick={() => navigate('/admin/feedback')}>
+                    {data.openComplaints}
+                  </button>
+                </li>
+              )}
+              {data.lockersOverdue != null && (
+                <li className="flex items-center justify-between">
+                  <span className="text-slate-600">Lockers overdue</span>
+                  <button className={data.lockersOverdue ? 'font-semibold text-rose-600 hover:underline' : 'font-semibold text-brand-700 hover:underline'} onClick={() => navigate('/admin/lockers?status=overdue')}>
+                    {data.lockersOverdue}
+                  </button>
+                </li>
+              )}
               <li className="flex items-center justify-between">
                 <span className="text-slate-600">New members this month</span>
                 <span className="font-semibold">{members.newThisMonth}</span>

@@ -16,6 +16,7 @@ import MemberForm from './MemberForm';
 import MemberPt from './MemberPt';
 import MemberDocuments from './MemberDocuments';
 import MemberAutopay from './MemberAutopay';
+import MemberLocker from './MemberLocker';
 import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 
@@ -302,6 +303,7 @@ export default function MemberDetail() {
         <div className="space-y-4">
           <AccessBanner access={access} member={member} />
           <MemberAutopay member={member} />
+          <MemberLocker member={member} />
           <MemberDocuments member={member} />
           <Card title="Details">
             <dl className="space-y-1.5 text-sm">

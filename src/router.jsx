@@ -29,6 +29,9 @@ const Payroll = lazy(() => import('./pages/Payroll'));
 const Shop = lazy(() => import('./pages/Shop'));
 const EquipmentPage = lazy(() => import('./pages/Equipment'));
 const PortalClasses = lazy(() => import('./pages/portal/PortalClasses'));
+const PortalFeedback = lazy(() => import('./pages/portal/PortalFeedback'));
+const Lockers = lazy(() => import('./pages/Lockers'));
+const Feedback = lazy(() => import('./pages/Feedback'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 const PortalHistory = lazy(() => import('./pages/portal/PortalHistory'));
@@ -64,6 +67,8 @@ export const router = createBrowserRouter([
       { path: 'payroll', element: s(<Payroll />) },
       { path: 'shop', element: s(<Shop />) },
       { path: 'equipment', element: s(<EquipmentPage />) },
+      { path: 'lockers', element: s(<Lockers />) },
+      { path: 'feedback', element: s(<Feedback />) },
     ],
   },
   { path: '/portal/login', element: s(<PortalLogin />) },
@@ -76,6 +81,7 @@ export const router = createBrowserRouter([
       { path: 'renew', element: s(<PortalRenew />) },
       { path: 'fitness', element: s(<PortalFitness />) },
       { path: 'classes', element: s(<PortalClasses />) },
+      { path: 'feedback', element: s(<PortalFeedback />) },
     ],
   },
   { path: '*', element: <Navigate to="/admin" replace /> },

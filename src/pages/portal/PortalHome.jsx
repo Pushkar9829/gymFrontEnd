@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { openCheckout } from '../../lib/razorpay';
 import { errorMessage } from '../../lib/api';
 import clsx from 'clsx';
-import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock } from 'lucide-react';
+import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight } from 'lucide-react';
 import { memberApi, openFile } from '../../lib/api';
 import { inr, fmtDate } from '../../lib/format';
 import { Avatar, Badge, Button, Card, PageLoader } from '../../components/ui';
@@ -17,6 +17,7 @@ export default function PortalHome() {
   const { data: cfg } = useQuery({ queryKey: ['portal', 'paycfg'], queryFn: () => portalGet('/me/pay/config') });
   const { data: pt } = useQuery({ queryKey: ['portal', 'pt'], queryFn: () => portalGet('/me/pt') });
   const { data: autopay } = useQuery({ queryKey: ['portal', 'autopay'], queryFn: () => portalGet('/me/autopay') });
+  const { data: locker } = useQuery({ queryKey: ['portal', 'locker'], queryFn: () => portalGet('/me/locker') });
   const autopayOn = autopay && ['created', 'authenticated', 'active', 'pending', 'halted', 'paused'].includes(autopay.status);
   const activePt = (pt?.purchases || []).filter((p) => p.status === 'active' && p.sessionsUsed < p.sessionsTotal && new Date(p.validTo) >= new Date(new Date().toDateString()));
   const qc = useQueryClient();
@@ -104,6 +105,31 @@ export default function PortalHome() {
           </ul>
         </Card>
       )}
+
+      {locker && (
+        <Card>
+          <div className="flex items-center gap-3">
+            <span className="rounded-lg bg-brand-50 p-2 text-brand-700">
+              <KeyRound className="size-5" />
+            </span>
+            <p className="text-sm">
+              Your locker <b className="text-base">{locker.number}</b>
+              <span className="block text-xs text-slate-500">paid till {fmtDate(locker.endDate)}</span>
+            </p>
+          </div>
+        </Card>
+      )}
+
+      <Link to="/portal/feedback" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <span className="rounded-lg bg-amber-50 p-2 text-amber-700">
+          <MessageSquareText className="size-5" />
+        </span>
+        <span className="flex-1 text-sm">
+          <b className="block">Complaint or suggestion?</b>
+          <span className="text-xs text-slate-500">Tell the gym and track the reply</span>
+        </span>
+        <ChevronRight className="size-5 text-slate-400" />
+      </Link>
 
       <Card title="My memberships" padded={false}>
         <ul className="divide-y divide-slate-100">

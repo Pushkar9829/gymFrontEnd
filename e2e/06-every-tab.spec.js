@@ -10,6 +10,7 @@ const STAFF_TABS = [
   { url: '/admin/fitness', tabs: ['Exercise library', 'Workout templates', 'Diet templates'] },
   { url: '/admin/shop', tabs: ['New sale', 'Products & stock', 'Sales'] },
   { url: '/admin/reports', tabs: ['Income & P&L', 'Dues', 'Expiring / expired', 'Attendance', 'Leads', 'Branches'] },
+  { url: '/admin/feedback', tabs: ['Open', 'In progress', 'Resolved', 'Closed', 'All'] },
   { url: '/admin/settings', tabs: ['Gym & entry rules', 'Branches', 'Staff', 'Audit log', 'My account'] },
 ];
 

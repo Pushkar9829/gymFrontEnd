@@ -29,6 +29,7 @@ const { Product, Stock } = await mod('modules/shop/shop.model.js');
 const { Company } = await mod('modules/companies/company.model.js');
 const { Equipment } = await mod('modules/equipment/equipment.model.js');
 const { Gym } = await mod('modules/settings/gym.model.js');
+const { Locker } = await mod('modules/lockers/locker.model.js');
 const { startOfDay, addDays } = await mod('utils/dates.js');
 
 const branch = await Branch.findOne({ code: 'MAIN' });
@@ -51,5 +52,6 @@ const bar = await Product.create({ name: 'Protein Bar', sku: 'BAR1', category: '
 await Stock.create({ productId: bar._id, branchId: branch._id, qty: 50 });
 await Company.create({ name: 'Acme Tech', gstin: '29AAACA1234A1Z5', discountPercent: 10, billTo: 'member' });
 await Equipment.create({ branchId: branch._id, name: 'Treadmill #1', category: 'cardio', brand: 'Life Fitness', serviceIntervalDays: 90, lastServiceAt: addDays(new Date(), -85), nextServiceDue: addDays(new Date(), 5) });
+await Locker.insertMany(Array.from({ length: 12 }, (_, i) => ({ branchId: branch._id, number: `L${i + 1}`, monthlyFee: 30000 })));
 console.log('E2E seed complete');
 await disconnectDb();

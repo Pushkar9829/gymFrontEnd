@@ -49,7 +49,7 @@ function Finance({ from, to }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Collected" value={inr(pnl?.collected)} tone="green" />
         <StatCard label="Refunds" value={inr(pnl?.refunded)} tone="amber" />
-        <StatCard label="Shop profit" value={inr(pnl?.shopProfit)} hint={`Sales ${inr(pnl?.shopSales)}`} tone="indigo" />
+        <StatCard label="Shop & lockers" value={inr((pnl?.shopProfit || 0) + (pnl?.lockerRent || 0))} hint={`Shop profit ${inr(pnl?.shopProfit)} · locker rent ${inr(pnl?.lockerRent)}`} tone="indigo" />
         <StatCard label="Expenses" value={inr(pnl?.expenses)} tone="red" />
         <StatCard label="Profit" value={inr(pnl?.profit)} tone={pnl?.profit >= 0 ? 'brand' : 'red'} />
       </div>

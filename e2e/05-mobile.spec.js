@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loginStaff, watchErrors, shot, waitIdle, expectNoHorizontalScroll } from './helpers.js';
 
 const ROUTES = [
-  'admin', 'admin/check-in', 'admin/members', 'admin/attendance', 'admin/payments', 'admin/classes', 'admin/pt', 'admin/fitness',
+  'admin', 'admin/check-in', 'admin/members', 'admin/attendance', 'admin/payments', 'admin/lockers', 'admin/feedback', 'admin/classes', 'admin/pt', 'admin/fitness',
   'admin/leads', 'admin/messages', 'admin/plans', 'admin/shop', 'admin/expenses', 'admin/payroll', 'admin/reports', 'admin/equipment',
   'admin/devices', 'admin/settings',
 ];

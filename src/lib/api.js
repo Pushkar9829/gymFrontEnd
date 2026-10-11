@@ -72,6 +72,7 @@ export const get = (url, params) => api.get(url, { params }).then((r) => r.data.
 export const post = (url, body) => api.post(url, body).then((r) => r.data.data);
 export const put = (url, body) => api.put(url, body).then((r) => r.data.data);
 export const del = (url) => api.delete(url).then((r) => r.data.data);
+export const patch = (url, body) => api.patch(url, body).then((r) => r.data.data);
 
 export const errorMessage = (err) =>
   err?.response?.data?.message || (err?.code === 'ERR_NETWORK' ? 'Cannot reach the server' : err?.message) || 'Something went wrong';

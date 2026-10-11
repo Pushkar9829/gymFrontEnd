@@ -40,7 +40,7 @@ test.describe.serial('trainer', () => {
 
   test('records a body measurement for a client', async () => {
     await page.getByRole('link', { name: 'Members', exact: true }).click();
-    await page.getByText('Rahul Sharma').click();
+    await page.locator('tbody').getByText('Rahul Sharma').first().click();
     await page.getByRole('button', { name: 'Fitness', exact: true }).click();
     await page.getByRole('button', { name: 'Add measurement' }).click();
     await field(page.getByRole('dialog'), 'Weight').fill('80');

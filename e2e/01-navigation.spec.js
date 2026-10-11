@@ -8,6 +8,8 @@ const SCREENS = [
   { label: 'Members', heading: 'Members' },
   { label: 'Attendance', heading: 'Attendance' },
   { label: 'Payments', heading: 'Payments' },
+  { label: 'Lockers', heading: 'Lockers' },
+  { label: 'Complaints & feedback', heading: 'Complaints & feedback' },
   { label: 'Classes', heading: 'Classes' },
   { label: 'Personal training', heading: 'Personal training' },
   { label: 'Workouts & diet', heading: 'Workouts & diet' },
@@ -28,7 +30,7 @@ const SCREENS = [
 const ROLE_MENU = {
   owner: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
   manager: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
-  receptionist: ['Dashboard', 'Check-in', 'Members', 'Attendance', 'Payments', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
+  receptionist: ['Dashboard', 'Check-in', 'Members', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
   trainer: ['Dashboard', 'Members', 'Attendance', 'Classes', 'Personal training', 'Workouts & diet', 'Plans & coupons', 'Equipment', 'My account'],
 };
 
