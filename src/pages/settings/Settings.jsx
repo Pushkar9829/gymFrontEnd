@@ -65,6 +65,9 @@ function GymSettings() {
             <Input value={f.settings.reminderDays} onChange={(e) => setS('reminderDays', e.target.value)} disabled={!editable} />
           </Field>
           <Toggle checked={f.settings.sendEmails} onChange={(v) => setS('sendEmails', v)} disabled={!editable} label="Send emails (invoices, reminders, birthdays)" />
+          <Toggle checked={!!f.settings.channels?.sms} onChange={(v) => setS('channels', { ...f.settings.channels, sms: v })} disabled={!editable} label="Send SMS (reminders, receipts, login codes)" />
+          <Toggle checked={!!f.settings.channels?.whatsapp} onChange={(v) => setS('channels', { ...f.settings.channels, whatsapp: v })} disabled={!editable} label="Send WhatsApp messages" />
+          <Toggle checked={f.settings.memberOtpLogin !== false} onChange={(v) => setS('memberOtpLogin', v)} disabled={!editable} label="Members can log in with a one-time code" />
           {editable && (
             <Button
               loading={save.isPending}
@@ -81,6 +84,8 @@ function GymSettings() {
                     graceDays: Number(f.settings.graceDays),
                     blockOnDues: f.settings.blockOnDues,
                     sendEmails: f.settings.sendEmails,
+                    channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp },
+                    memberOtpLogin: f.settings.memberOtpLogin !== false,
                     reminderDays: String(f.settings.reminderDays).split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
                   },
                 })
@@ -277,6 +282,36 @@ function ChangePassword() {
   );
 }
 
+function Sessions() {
+  const { data, refetch } = useQuery({ queryKey: ['sessions'], queryFn: () => get('/auth/sessions') });
+  const revoke = useAction((id) => post(`/auth/sessions/${id}/revoke`), { success: 'Logged out on that device', onSuccess: () => refetch() });
+  const others = useAction(() => post('/auth/sessions/revoke-others'), { success: 'Logged out everywhere else', onSuccess: () => refetch() });
+  return (
+    <Card
+      title="Where you're logged in"
+      padded={false}
+      className="max-w-2xl"
+      actions={
+        data?.length > 1 && (
+          <Button size="sm" variant="secondary" loading={others.isPending} onClick={() => others.mutate()}>
+            Log out other devices
+          </Button>
+        )
+      }
+    >
+      <Table
+        rows={data}
+        columns={[
+          { key: 'ua', label: 'Device', className: 'max-w-xs truncate text-xs', render: (s) => s.userAgent || 'Unknown' },
+          { key: 'ip', label: 'IP', render: (s) => s.ip || '—' },
+          { key: 'at', label: 'Signed in', render: (s) => fmtDateTime(s.createdAt) },
+          { key: 'x', label: '', render: (s) => (s.current ? <Badge status="allow">This device</Badge> : <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => revoke.mutate(s._id)}>Log out</Button>) },
+        ]}
+      />
+    </Card>
+  );
+}
+
 function AuditLog() {
   const [page, setPage] = useState(1);
   const { data } = useQuery({ queryKey: ['audit', page], queryFn: () => get('/audit', { page }) });
@@ -326,7 +361,12 @@ export default function Settings() {
       {tab === 'branches' && <Branches />}
       {tab === 'staff' && <Staff />}
       {tab === 'audit' && <AuditLog />}
-      {tab === 'me' && <ChangePassword />}
+      {tab === 'me' && (
+        <div className="space-y-4">
+          <ChangePassword />
+          <Sessions />
+        </div>
+      )}
     </div>
   );
 }
