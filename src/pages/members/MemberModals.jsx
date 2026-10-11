@@ -37,6 +37,7 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
   const [startDate, setStartDate] = useState('');
   const [discount, setDiscount] = useState('');
   const [waive, setWaive] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
   const [pay, setPay] = useState({ amount: '', mode: 'upi', reference: '' });
 
   const plan = plans?.find((p) => p._id === planId);
@@ -82,6 +83,7 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
                 startDate: startDate || undefined,
                 discount: toPaise(discount),
                 waiveJoiningFee: waive,
+                couponCode: couponCode.trim() || undefined,
                 payment: Number(pay.amount) > 0 ? { amount: toPaise(pay.amount), mode: pay.mode, reference: pay.reference || undefined } : undefined,
               })
             }
@@ -116,6 +118,9 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
           </Field>
           <Field label="Discount (₹)">
             <Input type="number" min="0" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+          </Field>
+          <Field label="Coupon code" hint="Applied when saving; total on the invoice">
+            <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
           </Field>
         </div>
         {isFirst && plan?.joiningFee > 0 && <Toggle checked={waive} onChange={setWaive} label="Waive joining fee" />}

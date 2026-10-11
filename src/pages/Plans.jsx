@@ -5,6 +5,7 @@ import { get, post, put } from '../lib/api';
 import { useAction } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, toPaise, toRupees } from '../lib/format';
+import Coupons from './Coupons';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PageLoader, Select, Textarea, Toggle } from '../components/ui';
 
 const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, isActive: true };
@@ -138,6 +139,9 @@ export default function Plans() {
           ))}
         </div>
       )}
+      <div className="mt-6">
+        <Coupons />
+      </div>
       {editing && <PlanForm plan={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );

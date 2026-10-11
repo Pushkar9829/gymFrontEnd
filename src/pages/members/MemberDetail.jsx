@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import {
   ArrowLeft, Pencil, Plus, IndianRupee, Snowflake, Ban, ShieldCheck, ShieldX, Smartphone, FileText, Trash2,
-  RefreshCw, Fingerprint, QrCode, ArrowUpCircle, XCircle, Play, Undo2,
+  RefreshCw, Fingerprint, QrCode, ArrowUpCircle, XCircle, Play, Undo2, Link2, Copy,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { get, post, put as apiPut, del, openFile } from '../../lib/api';
 import { useAction } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
@@ -90,6 +91,11 @@ function Memberships({ subscriptions, member, onAction }) {
               {live && s.dueAmount > 0 && can('payments.create') && (
                 <Button size="sm" onClick={() => onAction('pay', s)}>
                   <IndianRupee className="size-3.5" /> Collect due
+                </Button>
+              )}
+              {live && s.dueAmount > 0 && can('payments.create') && (
+                <Button size="sm" variant="secondary" onClick={() => onAction('link', s)}>
+                  <Link2 className="size-3.5" /> Payment link
                 </Button>
               )}
               {live && !runningFreeze && can('subscriptions.write') && (
@@ -207,6 +213,7 @@ export default function MemberDetail() {
   const unblock = useAction(() => post(`/members/${id}/unblock`), { success: 'Member unblocked', invalidate: ['member', 'members'] });
   const cancel = useAction(({ sub, reason }) => post(`/subscriptions/${sub._id}/cancel`, { reason }), { success: 'Membership cancelled', invalidate: ['member', 'members', 'dashboard'], onSuccess: close });
   const unfreeze = useAction(({ sub, freeze }) => post(`/subscriptions/${sub._id}/freezes/${freeze._id}/end`), { success: 'Freeze ended. Access restored.', invalidate: ['member', 'members'] });
+  const link = useAction((sub) => post('/online-payments/link', { subscriptionId: sub._id }), { onSuccess: (d) => setModal({ type: 'linkResult', extra: d }) });
   const remove = useAction(() => del(`/members/${id}`), { success: 'Member deleted', invalidate: ['members'], onSuccess: () => navigate('/admin/members') });
 
   if (isLoading || !data) return <PageLoader />;
@@ -215,6 +222,7 @@ export default function MemberDetail() {
 
   const onAction = (type, sub, extra) => {
     if (type === 'unfreeze') return unfreeze.mutate({ sub, freeze: extra });
+    if (type === 'link') return link.mutate(sub);
     setModal({ type, sub, extra });
   };
 
@@ -424,6 +432,23 @@ export default function MemberDetail() {
         <p className="text-sm text-slate-600">
           {member.name} will be hidden from lists and removed from all biometric devices (including fingerprints). Payment history is kept.
         </p>
+      </Modal>
+      <Modal open={modal?.type === 'linkResult'} onClose={close} title="Payment link sent" size="sm">
+        <p className="text-sm text-slate-600">Razorpay has sent this link to the member by SMS{member.email ? ' and email' : ''}. It is valid for 7 days. The due is cleared automatically when they pay.</p>
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 p-2">
+          <code className="flex-1 truncate text-sm">{modal?.extra?.shortUrl}</code>
+          <Button size="sm" variant="secondary" onClick={() => navigator.clipboard?.writeText(modal.extra.shortUrl).then(() => toast.success('Copied'))}>
+            <Copy className="size-3.5" />
+          </Button>
+        </div>
+        <a
+          className="mt-3 inline-block text-sm font-medium text-emerald-700 hover:underline"
+          target="_blank"
+          rel="noreferrer"
+          href={`https://wa.me/91${member.phone.replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(`Hi ${member.name}, please pay your gym membership due of ${inr(modal?.extra?.amount || 0)} here: ${modal?.extra?.shortUrl}`)}`}
+        >
+          Share on WhatsApp
+        </a>
       </Modal>
       <Modal open={modal?.type === 'card'} onClose={close} title="Membership QR card" size="sm">
         <div className="flex flex-col items-center text-center">

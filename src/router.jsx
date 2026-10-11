@@ -22,6 +22,7 @@ const Settings = lazy(() => import('./pages/settings/Settings'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 const PortalHistory = lazy(() => import('./pages/portal/PortalHistory'));
+const PortalRenew = lazy(() => import('./pages/portal/PortalRenew'));
 
 const s = (el) => <Suspense fallback={<PageLoader />}>{el}</Suspense>;
 
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: s(<PortalHome />) },
       { path: 'history', element: s(<PortalHistory />) },
+      { path: 'renew', element: s(<PortalRenew />) },
     ],
   },
   { path: '*', element: <Navigate to="/admin" replace /> },

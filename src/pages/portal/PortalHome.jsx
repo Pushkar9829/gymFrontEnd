@@ -1,14 +1,36 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { openCheckout } from '../../lib/razorpay';
+import { errorMessage } from '../../lib/api';
 import clsx from 'clsx';
 import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock } from 'lucide-react';
 import { memberApi, openFile } from '../../lib/api';
 import { inr, fmtDate } from '../../lib/format';
-import { Avatar, Badge, Card, PageLoader } from '../../components/ui';
+import { Avatar, Badge, Button, Card, PageLoader } from '../../components/ui';
 
 export const portalGet = (url, params) => memberApi.client.get(url, { params }).then((r) => r.data.data);
 
 export default function PortalHome() {
   const { data, isLoading } = useQuery({ queryKey: ['portal'], queryFn: () => portalGet('/me') });
+  const { data: cfg } = useQuery({ queryKey: ['portal', 'paycfg'], queryFn: () => portalGet('/me/pay/config') });
+  const qc = useQueryClient();
+  const [paying, setPaying] = useState(null);
+  async function payDue(sub) {
+    setPaying(sub._id);
+    try {
+      const order = await memberApi.client.post('/me/pay/due', { subscriptionId: sub._id }).then((r) => r.data.data);
+      const r = await openCheckout(order, { description: `${sub.plan?.name} membership due` });
+      await memberApi.client.post('/me/pay/verify', r);
+      toast.success('Payment successful. Thank you!');
+      await qc.invalidateQueries({ queryKey: ['portal'] });
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setPaying(null);
+    }
+  }
   if (isLoading || !data) return <PageLoader />;
   const { member, gym, branch, access, subscriptions, card } = data;
   const ok = access.allowed;
@@ -35,6 +57,11 @@ export default function PortalHome() {
           </p>
         )}
         {member.dueAmount > 0 && <p className="mt-1 rounded-lg bg-white/15 px-2 py-1 text-sm">Pending payment: {inr(member.dueAmount)}</p>}
+        {cfg?.enabled && (
+          <Link to="/portal/renew" className="mt-3 inline-block rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-brand-800">
+            {ok ? 'Renew / extend' : 'Renew now'}
+          </Link>
+        )}
       </div>
 
       <Card>
@@ -57,6 +84,11 @@ export default function PortalHome() {
                   {fmtDate(s.startDate)} → {fmtDate(s.endDate)}
                 </p>
                 {s.dueAmount > 0 && <p className="text-xs font-medium text-rose-600">Due {inr(s.dueAmount)}</p>}
+                {s.dueAmount > 0 && s.status === 'active' && cfg?.enabled && (
+                  <Button size="sm" className="mt-1" loading={paying === s._id} onClick={() => payDue(s)}>
+                    Pay {inr(s.dueAmount)}
+                  </Button>
+                )}
               </div>
               {s.invoiceId && (
                 <button onClick={() => openFile(`/me/invoices/${s.invoiceId}/pdf`, { client: memberApi.client })} className="rounded-lg p-2 text-brand-700 hover:bg-brand-50" aria-label="Invoice">
