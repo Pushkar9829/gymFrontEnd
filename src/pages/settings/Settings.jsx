@@ -4,7 +4,8 @@ import { Plus, Pencil } from 'lucide-react';
 import { get, post, put } from '../../lib/api';
 import { useAction, useBranches } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
-import { fmtDateTime } from '../../lib/format';
+import { fmtDateTime, inr, toPaise, toRupees } from '../../lib/format';
+import { MyPayslips } from '../Payroll';
 import { Badge, Button, Card, Field, Input, Modal, PageHeader, PageLoader, Select, Table, Tabs, Textarea, Toggle } from '../../components/ui';
 
 function GymSettings() {
@@ -196,6 +197,7 @@ function Staff() {
           { key: 'email', label: 'Email' },
           { key: 'role', label: 'Role', render: (u) => <span className="capitalize">{u.role}</span> },
           { key: 'pin', label: 'Device ID', render: (u) => (u.devicePin ? <code>{u.devicePin}</code> : '—') },
+          { key: 'sal', label: 'Salary', className: 'hidden lg:table-cell', render: (u) => (u.salary?.amount ? `${inr(u.salary.amount)}${u.salary.type === 'per-day' ? '/day' : '/mo'}` : '—') },
           { key: 'b', label: 'Branches', render: (u) => (u.role === 'owner' ? 'All' : u.branchIds.map(bName).join(', ')) },
           { key: 'status', label: 'Status', render: (u) => <Badge status={u.isActive ? 'allow' : 'cancelled'}>{u.isActive ? 'Active' : 'Disabled'}</Badge> },
           { key: 'last', label: 'Last login', className: 'hidden md:table-cell', render: (u) => fmtDateTime(u.lastLoginAt) },
@@ -210,13 +212,15 @@ function Staff() {
 function StaffForm({ staff, onClose }) {
   const { data: branches } = useBranches();
   const isOwner = useAuth((s) => s.user.role === 'owner');
-  const [f, setF] = useState(staff);
+  const canPayroll = useAuth((s) => s.can('payroll.manage'));
+  const [f, setF] = useState({ ...staff, salaryType: staff.salary?.type || 'monthly', salaryAmount: staff.salary?.amount ? toRupees(staff.salary.amount) : '' });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const save = useAction((b) => (staff._id ? put(`/users/${staff._id}`, b) : post('/users', b)), { success: 'Staff saved', invalidate: ['users'], onSuccess: onClose });
   const toggleBranch = (id) => setF({ ...f, branchIds: f.branchIds.includes(id) ? f.branchIds.filter((b) => b !== id) : [...f.branchIds, id] });
   const submit = () => {
     const body = { name: f.name, email: f.email, phone: f.phone || undefined, role: f.role, branchIds: f.branchIds };
     if (f.role === 'trainer') body.ptCommissionPercent = Number(f.ptCommissionPercent || 0);
+    if (canPayroll && f.salaryAmount !== undefined) body.salary = { type: f.salaryType || 'monthly', amount: toPaise(f.salaryAmount) };
     if (f.password) body.password = f.password;
     if (staff._id) body.isActive = f.isActive;
     save.mutate(body);
@@ -241,6 +245,19 @@ function StaffForm({ staff, onClose }) {
             {isOwner && <option value="owner">Owner</option>}
           </Select>
         </Field>
+        {canPayroll && (
+          <>
+            <Field label="Salary type">
+              <Select value={f.salaryType} onChange={set('salaryType')}>
+                <option value="monthly">Monthly</option>
+                <option value="per-day">Per day</option>
+              </Select>
+            </Field>
+            <Field label={f.salaryType === 'per-day' ? 'Per-day rate (₹)' : 'Monthly salary (₹)'} hint="Empty or 0 = not on payroll">
+              <Input type="number" min="0" value={f.salaryAmount} onChange={set('salaryAmount')} />
+            </Field>
+          </>
+        )}
         {f.role === 'trainer' && (
           <Field label="PT commission %" hint="Trainer's share of PT package price per session">
             <Input type="number" min="0" max="100" value={f.ptCommissionPercent ?? 0} onChange={set('ptCommissionPercent')} />
@@ -371,6 +388,7 @@ export default function Settings() {
       {tab === 'me' && (
         <div className="space-y-4">
           <ChangePassword />
+          <MyPayslips />
           <Sessions />
         </div>
       )}
