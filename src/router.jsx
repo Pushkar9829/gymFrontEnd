@@ -27,6 +27,7 @@ const Classes = lazy(() => import('./pages/Classes'));
 const Join = lazy(() => import('./pages/Join'));
 const Payroll = lazy(() => import('./pages/Payroll'));
 const Shop = lazy(() => import('./pages/Shop'));
+const EquipmentPage = lazy(() => import('./pages/Equipment'));
 const PortalClasses = lazy(() => import('./pages/portal/PortalClasses'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: 'classes', element: s(<Classes />) },
       { path: 'payroll', element: s(<Payroll />) },
       { path: 'shop', element: s(<Shop />) },
+      { path: 'equipment', element: s(<EquipmentPage />) },
     ],
   },
   { path: '/portal/login', element: s(<PortalLogin />) },
