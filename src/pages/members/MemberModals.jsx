@@ -38,6 +38,9 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
   const [discount, setDiscount] = useState('');
   const [waive, setWaive] = useState(false);
   const [couponCode, setCouponCode] = useState('');
+  const [family, setFamily] = useState([]);
+  const [famQ, setFamQ] = useState('');
+  const { data: famFound } = useQuery({ queryKey: ['family-search', famQ], queryFn: () => get('/members', { search: famQ, limit: 5 }), enabled: famQ.length >= 2 });
   const [pay, setPay] = useState({ amount: '', mode: 'upi', reference: '' });
 
   const plan = plans?.find((p) => p._id === planId);
@@ -84,6 +87,7 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
                 discount: toPaise(discount),
                 waiveJoiningFee: waive,
                 couponCode: couponCode.trim() || undefined,
+                familyMemberIds: plan?.maxMembers > 1 ? family.map((x) => x._id) : [],
                 payment: Number(pay.amount) > 0 ? { amount: toPaise(pay.amount), mode: pay.mode, reference: pay.reference || undefined } : undefined,
               })
             }
@@ -123,6 +127,41 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
             <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
           </Field>
         </div>
+        {plan?.maxMembers > 1 && (
+          <div className="rounded-xl bg-emerald-50 p-3">
+            <p className="text-sm font-medium text-emerald-900">
+              {plan.name} covers {plan.maxMembers} members. Add up to {plan.maxMembers - 1} more:
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {family.map((x) => (
+                <span key={x._id} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-sm ring-1 ring-emerald-200">
+                  {x.name} #{x.memberCode}
+                  <button className="text-slate-400" onClick={() => setFamily(family.filter((y) => y._id !== x._id))} aria-label="Remove">
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            {family.length < plan.maxMembers - 1 && (
+              <>
+                <Input className="mt-2" value={famQ} onChange={(e) => setFamQ(e.target.value)} placeholder="Search member to add (register them first)" />
+                {famQ.length >= 2 && (
+                  <ul className="mt-1 rounded-lg bg-white ring-1 ring-slate-200">
+                    {famFound?.items
+                      ?.filter((x) => x._id !== member._id && !family.some((y) => y._id === x._id))
+                      .map((x) => (
+                        <li key={x._id}>
+                          <button className="w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50" onClick={() => (setFamily([...family, x]), setFamQ(''))}>
+                            {x.name} <span className="text-slate-400">#{x.memberCode}</span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        )}
         {isFirst && plan?.joiningFee > 0 && <Toggle checked={waive} onChange={setWaive} label="Waive joining fee" />}
         {calc && (
           <div className="rounded-xl bg-slate-50 p-3 text-sm">
@@ -131,6 +170,7 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
             {calc.disc > 0 && <Row label="Discount" value={`- ${inr(calc.disc)}`} />}
             {calc.tax > 0 && <Row label={`GST ${calc.taxPercent}%`} value={inr(calc.tax)} />}
             <Row label={<b>Total</b>} value={<b>{inr(calc.total)}</b>} />
+            {member.companyId?.discountPercent > 0 && <p className="text-xs text-emerald-700">+ {member.companyId.discountPercent}% {member.companyId.name} discount applied on save</p>}
             <button type="button" className="mt-1 text-xs font-medium text-brand-700 hover:underline" onClick={() => setPay({ ...pay, amount: String(toRupees(calc.total)) })}>
               Received full amount
             </button>

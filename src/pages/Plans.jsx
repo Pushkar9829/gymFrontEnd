@@ -6,9 +6,10 @@ import { useAction } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, toPaise, toRupees } from '../lib/format';
 import Coupons from './Coupons';
+import Companies from './Companies';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PageLoader, Select, Textarea, Toggle } from '../components/ui';
 
-const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, accessStart: '', accessEnd: '', deviceTimezoneId: 1, isActive: true };
+const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, accessStart: '', accessEnd: '', deviceTimezoneId: 1, maxMembers: 1, isActive: true };
 
 function PlanForm({ plan, onClose }) {
   const [f, setF] = useState(
@@ -36,6 +37,7 @@ function PlanForm({ plan, onClose }) {
       accessStart: f.accessStart || null,
       accessEnd: f.accessEnd || null,
       deviceTimezoneId: Number(f.deviceTimezoneId) || 1,
+      maxMembers: Number(f.maxMembers) || 1,
       isActive: f.isActive,
     });
   return (
@@ -82,6 +84,10 @@ function PlanForm({ plan, onClose }) {
         <Field label="Max number of freezes">
           <Input type="number" min="0" value={f.maxFreezes} onChange={set('maxFreezes')} />
         </Field>
+        <Field label="Members covered" hint="2 = couple plan, 4 = family plan">
+          <Input type="number" min="1" max="10" value={f.maxMembers ?? 1} onChange={set('maxMembers')} />
+        </Field>
+        <div />
         <Field label="Entry from (optional)" hint="Time-slot plan, e.g. morning only">
           <Input type="time" value={f.accessStart || ''} onChange={set('accessStart')} />
         </Field>
@@ -144,6 +150,7 @@ export default function Plans() {
                 <li>GST {p.taxPercent ?? 'default'}{p.taxPercent != null && '%'}</li>
                 <li>{p.freezeDaysAllowed ? `${p.freezeDaysAllowed} freeze days (max ${p.maxFreezes}×)` : 'No freeze'}</li>
                 {p.accessStart && <li className="text-indigo-700">Entry {p.accessStart}–{p.accessEnd} only</li>}
+                {p.maxMembers > 1 && <li className="text-emerald-700">Covers {p.maxMembers} members</li>}
               </ul>
               {can('plans.write') && (
                 <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(p)}>
@@ -154,8 +161,9 @@ export default function Plans() {
           ))}
         </div>
       )}
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
         <Coupons />
+        <Companies />
       </div>
       {editing && <PlanForm plan={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>

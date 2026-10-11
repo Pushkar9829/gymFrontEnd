@@ -22,6 +22,7 @@ const schema = z.object({
   healthNotes: z.string().optional(),
   trainerId: z.string().optional(),
   source: z.string().optional(),
+  companyId: z.string().optional(),
   photoUrl: z.string().optional(),
 });
 
@@ -29,6 +30,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
   const { data: branches } = useBranches();
   const defaultBranch = useDefaultBranchId();
   const { data: trainers } = useQuery({ queryKey: ['trainers'], queryFn: () => get('/users/trainers'), enabled: open });
+  const { data: companies } = useQuery({ queryKey: ['companies'], queryFn: () => get('/companies'), enabled: open });
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -46,6 +48,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       healthNotes: member?.healthNotes || '',
       trainerId: member?.trainerId?._id || member?.trainerId || '',
       source: member?.source || 'walk-in',
+      companyId: member?.companyId?._id || member?.companyId || '',
       photoUrl: member?.photoUrl || '',
     },
   });
@@ -72,6 +75,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       source: v.source,
       photoUrl: v.photoUrl,
       trainerId: v.trainerId || null,
+      companyId: v.companyId || null,
       emergencyContact: { name: v.ecName, phone: v.ecPhone, relation: v.ecRelation },
     };
     save.mutate(body);
@@ -146,6 +150,18 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
             ))}
           </Select>
         </Field>
+        {companies?.length > 0 && (
+          <Field label="Company (corporate tie-up)">
+            <Select {...register('companyId')}>
+              <option value="">None</option>
+              {companies.filter((c) => c.isActive).map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name} ({c.discountPercent}% off)
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
         <Field label="Address" className="sm:col-span-2">
           <Input {...register('address')} />
         </Field>

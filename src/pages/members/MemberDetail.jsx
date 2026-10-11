@@ -66,6 +66,9 @@ function Memberships({ subscriptions, member, onAction }) {
                   )}
                 </p>
                 {s.cancelReason && <p className="text-xs text-slate-500">Cancelled: {s.cancelReason}</p>}
+                {s.groupOf && <p className="text-xs text-emerald-700">Covered by a family plan (billed to the main member)</p>}
+                {s.familyMemberIds?.length > 0 && <p className="text-xs text-emerald-700">Family plan: also covers {s.familyMemberIds.length} other member(s)</p>}
+                {s.billTo === 'company' && <p className="text-xs text-indigo-700">Billed to company</p>}
               </div>
               <div className="text-right text-sm">
                 <p>
@@ -250,6 +253,7 @@ export default function MemberDetail() {
               <p className="text-sm text-slate-500">
                 {member.branchId?.name} · Joined {fmtDate(member.joinedAt)}
                 {member.trainerId && ` · Trainer: ${member.trainerId.name}`}
+                {member.companyId && ` · ${member.companyId.name}`}
               </p>
               <div className="mt-2 flex items-center gap-2">
                 <Badge status={member.membershipStatus} />
