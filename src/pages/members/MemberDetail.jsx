@@ -13,6 +13,7 @@ import { useAuth } from '../../store/auth';
 import { inr, fmtDate, fmtDateTime, fmtTime, daysUntil } from '../../lib/format';
 import { Avatar, Badge, Button, Card, EmptyState, Modal, PageLoader, Table, Tabs, Toggle } from '../../components/ui';
 import MemberForm from './MemberForm';
+import MemberPt from './MemberPt';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 
 function AccessBanner({ access, member }) {
@@ -319,12 +320,14 @@ export default function MemberDetail() {
           onChange={setTab}
           tabs={[
             { value: 'memberships', label: 'Memberships', count: subscriptions.length },
+            { value: 'pt', label: 'Personal training' },
             { value: 'payments', label: 'Payments' },
             { value: 'attendance', label: 'Attendance & entry log' },
             { value: 'biometric', label: 'Biometric' },
           ]}
         />
         {tab === 'memberships' && <Memberships subscriptions={subscriptions} member={member} onAction={onAction} />}
+        {tab === 'pt' && <MemberPt member={member} />}
         {tab === 'payments' && (
           <Card padded={false}>
             <Table

@@ -15,6 +15,8 @@ export const portalGet = (url, params) => memberApi.client.get(url, { params }).
 export default function PortalHome() {
   const { data, isLoading } = useQuery({ queryKey: ['portal'], queryFn: () => portalGet('/me') });
   const { data: cfg } = useQuery({ queryKey: ['portal', 'paycfg'], queryFn: () => portalGet('/me/pay/config') });
+  const { data: pt } = useQuery({ queryKey: ['portal', 'pt'], queryFn: () => portalGet('/me/pt') });
+  const activePt = (pt?.purchases || []).filter((p) => p.status === 'active' && p.sessionsUsed < p.sessionsTotal && new Date(p.validTo) >= new Date(new Date().toDateString()));
   const qc = useQueryClient();
   const [paying, setPaying] = useState(null);
   async function payDue(sub) {
@@ -71,6 +73,25 @@ export default function PortalHome() {
           <p className="text-xs text-slate-500">Show this at reception if the biometric scanner is unavailable.</p>
         </div>
       </Card>
+
+      {activePt.length > 0 && (
+        <Card title="Personal training">
+          <ul className="space-y-2 text-sm">
+            {activePt.map((p) => (
+              <li key={p._id} className="flex items-center justify-between">
+                <span>
+                  <b>{p.package?.name}</b> with {p.trainerId?.name}
+                  <span className="block text-xs text-slate-500">valid till {fmtDate(p.validTo)}</span>
+                </span>
+                <span className="text-right">
+                  <b className="text-lg text-brand-800">{p.sessionsTotal - p.sessionsUsed}</b>
+                  <span className="block text-xs text-slate-500">sessions left</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title="My memberships" padded={false}>
         <ul className="divide-y divide-slate-100">

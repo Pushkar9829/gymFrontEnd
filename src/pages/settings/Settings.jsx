@@ -215,6 +215,7 @@ function StaffForm({ staff, onClose }) {
   const toggleBranch = (id) => setF({ ...f, branchIds: f.branchIds.includes(id) ? f.branchIds.filter((b) => b !== id) : [...f.branchIds, id] });
   const submit = () => {
     const body = { name: f.name, email: f.email, phone: f.phone || undefined, role: f.role, branchIds: f.branchIds };
+    if (f.role === 'trainer') body.ptCommissionPercent = Number(f.ptCommissionPercent || 0);
     if (f.password) body.password = f.password;
     if (staff._id) body.isActive = f.isActive;
     save.mutate(body);
@@ -239,6 +240,11 @@ function StaffForm({ staff, onClose }) {
             {isOwner && <option value="owner">Owner</option>}
           </Select>
         </Field>
+        {f.role === 'trainer' && (
+          <Field label="PT commission %" hint="Trainer's share of PT package price per session">
+            <Input type="number" min="0" max="100" value={f.ptCommissionPercent ?? 0} onChange={set('ptCommissionPercent')} />
+          </Field>
+        )}
         <Field label={staff._id ? 'New password (optional)' : 'Password'} hint="At least 8 characters" className="sm:col-span-2">
           <Input value={f.password} onChange={set('password')} type="password" autoComplete="new-password" />
         </Field>

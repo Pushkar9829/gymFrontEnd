@@ -20,6 +20,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Devices = lazy(() => import('./pages/Devices'));
 const Settings = lazy(() => import('./pages/settings/Settings'));
 const Messages = lazy(() => import('./pages/Messages'));
+const PersonalTraining = lazy(() => import('./pages/PersonalTraining'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 const PortalHistory = lazy(() => import('./pages/portal/PortalHistory'));
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
       { path: 'devices', element: s(<Devices />) },
       { path: 'settings', element: s(<Settings />) },
       { path: 'messages', element: s(<Messages />) },
+      { path: 'pt', element: s(<PersonalTraining />) },
     ],
   },
   { path: '/portal/login', element: s(<PortalLogin />) },
