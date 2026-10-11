@@ -281,7 +281,7 @@ test.describe.serial('personal training', () => {
   test('create a PT package and edit it', async () => {
     const { page } = ctx;
     await page.getByRole('button', { name: 'Packages', exact: true }).click();
-    await page.getByRole('button', { name: 'New package' }).click();
+    await page.getByRole('button', { name: 'New package' }).first().click();
     await field(dlg(), 'Name').fill('Starter 6');
     await field(dlg(), 'Sessions').fill('6');
     await field(dlg(), 'Price').fill('4800');
@@ -322,7 +322,7 @@ test.describe.serial('workouts & diet library', () => {
   test('load starter library and add an exercise', async () => {
     const { page } = ctx;
     await page.getByRole('button', { name: 'Exercise library' }).click();
-    await page.getByRole('button', { name: 'Load starter library' }).click();
+    await page.getByRole('button', { name: 'Load starter library' }).first().click();
     await toast(page, /^\d+ exercises added/);
     await page.getByRole('button', { name: 'Exercise', exact: true }).click();
     await field(dlg(), 'Name').fill('Cable Woodchop');
@@ -336,7 +336,7 @@ test.describe.serial('workouts & diet library', () => {
   test('build a two-day workout template', async () => {
     const { page } = ctx;
     await page.getByRole('button', { name: 'Workout templates' }).click();
-    await page.getByRole('button', { name: 'New template' }).click();
+    await page.getByRole('button', { name: 'New template' }).first().click();
     await expect(dlg().getByText('New workout template')).toBeVisible();
     await field(dlg(), 'Plan name').fill('E2E Full Body');
     await dlg().getByPlaceholder('Exercise').nth(0).fill('Plank');
@@ -372,7 +372,7 @@ test.describe.serial('leads, shop, expenses', () => {
   test('new enquiry, then mark it lost', async () => {
     const { page } = ctx;
     await nav(page, 'Leads');
-    await page.getByRole('button', { name: 'New enquiry' }).click();
+    await page.getByRole('button', { name: 'New enquiry' }).first().click();
     await field(dlg(), 'Name').fill('Lost Lead');
     await field(dlg(), 'Phone').fill('9123488001');
     await dlg().getByRole('button', { name: 'Save' }).click();
@@ -420,7 +420,7 @@ test.describe.serial('leads, shop, expenses', () => {
   test('expenses: add, delete, Excel', async () => {
     const { page } = ctx;
     await nav(page, 'Expenses');
-    await page.getByRole('button', { name: 'Add expense' }).click();
+    await page.getByRole('button', { name: 'Add expense' }).first().click();
     await field(dlg(), 'Amount').fill('321');
     await field(dlg(), 'Note').fill('E2E delete me');
     await dlg().getByRole('button', { name: 'Save' }).click();
@@ -527,7 +527,7 @@ test.describe.serial('plans, coupons, companies', () => {
 
   test('edit a coupon', async () => {
     const { page } = ctx;
-    await page.getByRole('button', { name: 'New coupon' }).click();
+    await page.getByRole('button', { name: 'New coupon' }).first().click();
     await field(dlg(), 'Code').fill('E2EEDIT');
     await dlg().getByRole('button', { name: 'Save' }).click();
     await toast(page, 'Coupon saved');
@@ -604,7 +604,7 @@ test('leads: dismissing the "Mark lost" prompt keeps the lead open', async ({ pa
   page.on('dialog', (d) => d.dismiss());
   await loginStaff(page, 'receptionist');
   await nav(page, 'Leads');
-  await page.getByRole('button', { name: 'New enquiry' }).click();
+  await page.getByRole('button', { name: 'New enquiry' }).first().click();
   const dlg = page.getByRole('dialog');
   await field(dlg, 'Name').fill('Kept Lead');
   await field(dlg, 'Phone').fill('9123488002');

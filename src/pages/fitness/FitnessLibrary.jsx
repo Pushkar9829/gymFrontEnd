@@ -44,7 +44,7 @@ function Exercises() {
       </div>
       <Table
         rows={data}
-        empty={<EmptyState title="No exercises yet">Use “Load starter library” to add 35+ common exercises.</EmptyState>}
+        empty={<EmptyState title="No exercises yet">Add 35+ common exercises in one click.<div>{can('fitness.write') && (<Button size="sm" className="mt-3" loading={defaults.isPending} onClick={() => defaults.mutate()}><Library className="size-4" /> Load starter library</Button>)}</div></EmptyState>}
         columns={[
           { key: 'name', label: 'Exercise', render: (e) => <b>{e.name}</b> },
           { key: 'g', label: 'Muscle group', render: (e) => <span className="capitalize">{e.muscleGroup}</span> },
@@ -95,7 +95,7 @@ function Templates({ kind }) {
     >
       <Table
         rows={data}
-        empty={<EmptyState title="No templates yet">Templates can be assigned to members in one click from their Fitness tab.</EmptyState>}
+        empty={<EmptyState title="No templates yet">Templates can be assigned to members in one click from their Fitness tab.<div>{can('fitness.write') && (<Button size="sm" className="mt-3" onClick={() => setEdit('new')}><Plus className="size-4" /> New template</Button>)}</div></EmptyState>}
         columns={[
           { key: 'name', label: 'Name', render: (p) => <b>{p.name}</b> },
           {

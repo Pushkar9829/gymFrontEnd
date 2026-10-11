@@ -295,7 +295,7 @@ function Products() {
     >
       <Table
         rows={data}
-        empty={<EmptyState title="No products yet" />}
+        empty={<EmptyState title="No products yet">Add supplements, drinks or merchandise to sell at the desk.<div>{can('shop.manage') && (<Button size="sm" className="mt-3" onClick={() => setModal({ type: 'edit' })}><Plus className="size-4" /> Add product</Button>)}</div></EmptyState>}
         columns={[
           { key: 'n', label: 'Product', render: (p) => <span><b>{p.name}</b>{p.sku && <span className="ml-1 text-xs text-slate-400">{p.sku}</span>}</span> },
           { key: 'c', label: 'Category', render: (p) => <span className="capitalize">{p.category}</span> },

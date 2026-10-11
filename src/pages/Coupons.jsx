@@ -106,7 +106,7 @@ export default function Coupons() {
     >
       <Table
         rows={data}
-        empty={<EmptyState icon={TicketPercent} title="No coupons yet" />}
+        empty={<EmptyState icon={TicketPercent} title="No coupons yet">Offer a discount code for a festival or a referral.<div>{can('plans.write') && (<Button size="sm" className="mt-3" onClick={() => setEdit('new')}><Plus className="size-4" /> New coupon</Button>)}</div></EmptyState>}
         columns={[
           { key: 'code', label: 'Code', render: (c) => <b className="font-mono">{c.code}</b> },
           { key: 'off', label: 'Discount', render: (c) => (c.type === 'percent' ? `${c.value}%${c.maxDiscount ? ` (max ${inr(c.maxDiscount)})` : ''}` : inr(c.value)) },

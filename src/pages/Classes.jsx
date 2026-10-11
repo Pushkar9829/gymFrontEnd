@@ -281,7 +281,7 @@ function Schedules() {
     <Card padded={false} title="Weekly schedule" actions={can('classes.write') && <Button size="sm" onClick={() => setEdit('new')}><Plus className="size-4" /> New weekly class</Button>}>
       <Table
         rows={data}
-        empty={<EmptyState title="No classes scheduled" />}
+        empty={<EmptyState title="No classes scheduled">Set up a repeating class, e.g. Yoga every Mon / Wed / Fri at 7 AM.<div>{can('classes.write') && (<Button size="sm" className="mt-3" onClick={() => setEdit('new')}><Plus className="size-4" /> New weekly class</Button>)}</div></EmptyState>}
         columns={[
           { key: 'c', label: 'Class', render: (s) => <b>{s.classTypeId?.name}</b> },
           { key: 'd', label: 'Days', render: (s) => s.weekdays.map((d) => WEEKDAYS[d]).join(', ') },

@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useApi } from '../lib/hooks';
 import { inr, fromNow, fmtTime, ymd } from '../lib/format';
 import { useAuth } from '../store/auth';
+import SetupChecklist from './SetupChecklist';
 import { Card, PageHeader, PageLoader, StatCard, Button } from '../components/ui';
 
 // A trainer's day: their classes today and PT clients with sessions left.
@@ -74,6 +75,7 @@ export default function Dashboard() {
         }
       />
 
+      <SetupChecklist />
       {user.role === 'trainer' && <TrainerDay />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

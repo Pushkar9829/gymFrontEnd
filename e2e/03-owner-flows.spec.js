@@ -45,7 +45,7 @@ test.describe.serial('owner', () => {
   });
 
   test('coupons and companies', async () => {
-    await page.getByRole('button', { name: 'New coupon' }).click();
+    await page.getByRole('button', { name: 'New coupon' }).first().click();
     await field(dlg(), 'Code').fill('WELCOME10');
     await dlg().getByRole('button', { name: 'Save' }).click();
     await toast('Coupon saved');
@@ -131,7 +131,7 @@ test.describe.serial('owner', () => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await toast('Class type added');
     await page.getByRole('button', { name: 'Weekly schedule' }).click();
-    await page.getByRole('button', { name: 'New weekly class' }).click();
+    await page.getByRole('button', { name: 'New weekly class' }).first().click();
     await selectField(dlg(), 'Class').selectOption({ label: 'Zumba' });
     await dlg().getByRole('button', { name: 'Save' }).click();
     await toast('Schedule saved');
@@ -161,7 +161,7 @@ test.describe.serial('owner', () => {
 
   test('equipment: add and log service', async () => {
     await nav('Equipment');
-    await page.getByRole('button', { name: 'Add equipment' }).click();
+    await page.getByRole('button', { name: 'Add equipment' }).first().click();
     await field(dlg(), 'Name').fill('Leg Press');
     await dlg().getByRole('button', { name: 'Save' }).click();
     await toast('Saved');

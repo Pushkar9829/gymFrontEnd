@@ -118,7 +118,7 @@ export default function Expenses() {
           <>
             <Table
               rows={data?.items}
-              empty={<EmptyState title="No expenses in this period" />}
+              empty={<EmptyState title="No expenses in this period">{can('expenses.write') && (<Button size="sm" className="mt-3" onClick={() => setCreating(true)}><Plus className="size-4" /> Add expense</Button>)}</EmptyState>}
               columns={[
                 { key: 'date', label: 'Date', render: (e) => fmtDate(e.date) },
                 { key: 'category', label: 'Category', render: (e) => <span className="capitalize">{e.category}</span> },

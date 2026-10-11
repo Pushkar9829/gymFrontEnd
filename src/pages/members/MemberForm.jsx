@@ -132,7 +132,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
           </Select>
         </Field>
         <Field label="Date of birth">
-          <Input type="date" {...register('dob')} max={ymd()} />
+          <Input type="date" value={watch('dob') || ''} onChange={(e) => setValue('dob', e.target.value, { shouldDirty: true })} max={ymd()} />
         </Field>
         <Field label="Trainer">
           <Select {...register('trainerId')}>

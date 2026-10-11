@@ -193,7 +193,7 @@ export default function Leads() {
             <Table
               rows={data?.items}
               onRowClick={(l) => setOpenId(l._id)}
-              empty={<EmptyState title="No leads here" />}
+              empty={<EmptyState title="No leads here">{can('leads.write') && (<Button size="sm" className="mt-3" onClick={() => setCreating(true)}><Plus className="size-4" /> New enquiry</Button>)}</EmptyState>}
               columns={[
                 { key: 'name', label: 'Name', render: (l) => <span className="font-medium text-slate-900">{l.name}</span> },
                 { key: 'phone', label: 'Phone' },

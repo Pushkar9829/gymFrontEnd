@@ -103,7 +103,7 @@ export default function Companies() {
     >
       <Table
         rows={data}
-        empty={<EmptyState icon={Building2} title="No companies yet">Link members to a company to apply its discount automatically.</EmptyState>}
+        empty={<EmptyState icon={Building2} title="No companies yet">Link members to a company to apply its discount automatically.<div>{can('plans.write') && (<Button size="sm" className="mt-3" onClick={() => setModal({ type: 'edit' })}><Plus className="size-4" /> Add company</Button>)}</div></EmptyState>}
         columns={[
           { key: 'n', label: 'Company', render: (c) => <b>{c.name}</b> },
           { key: 'd', label: 'Discount', render: (c) => `${c.discountPercent}%` },

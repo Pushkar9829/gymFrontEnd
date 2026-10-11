@@ -213,7 +213,7 @@ export default function EquipmentPage() {
         </div>
         <Table
           rows={data?.items}
-          empty={<EmptyState icon={Wrench} title="No equipment registered" />}
+          empty={<EmptyState icon={Wrench} title="No equipment registered">Add machines to get service reminders and track repairs.<div>{can('equipment.manage') && (<Button size="sm" className="mt-3" onClick={() => setModal({ type: 'edit' })}><Plus className="size-4" /> Add equipment</Button>)}</div></EmptyState>}
           columns={[
             { key: 'n', label: 'Equipment', render: (e) => <span><b>{e.name}</b><span className="block text-xs text-slate-500">{[e.brand, e.model, e.location].filter(Boolean).join(' · ')}</span></span> },
             { key: 'c', label: 'Category', render: (e) => e.category },

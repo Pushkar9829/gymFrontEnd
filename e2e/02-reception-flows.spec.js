@@ -74,7 +74,7 @@ test.describe.serial('reception', () => {
 
   test('new enquiry, follow-up, convert to member', async () => {
     await page.getByRole('link', { name: 'Leads', exact: true }).click();
-    await page.getByRole('button', { name: 'New enquiry' }).click();
+    await page.getByRole('button', { name: 'New enquiry' }).first().click();
     const dlg = page.getByRole('dialog');
     await field(dlg, 'Name').fill('Walk In Lead');
     await field(dlg, 'Phone').fill('9123400002');
@@ -109,7 +109,7 @@ test.describe.serial('reception', () => {
 
   test('add an expense', async () => {
     await page.getByRole('link', { name: 'Expenses', exact: true }).click();
-    await page.getByRole('button', { name: 'Add expense' }).click();
+    await page.getByRole('button', { name: 'Add expense' }).first().click();
     await field(page.getByRole('dialog'), 'Amount').fill('750');
     await field(page.getByRole('dialog'), 'Note').fill('Cleaning supplies');
     await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();

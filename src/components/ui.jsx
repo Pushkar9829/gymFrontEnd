@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsxBase from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Loader2, X, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import { Loader2, X, ChevronLeft, ChevronRight, Inbox, CalendarDays } from 'lucide-react';
 import { STATUS_STYLES, STATUS_LABEL, initials } from '../lib/format';
 
 // Later classes win (e.g. a caller's w-auto beats the default w-full).
@@ -50,7 +50,88 @@ const inputCls =
   'block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 disabled:bg-slate-50 disabled:text-slate-500';
 
 export function Input({ className, ...props }) {
+  if (props.type === 'date') return <DateInput className={className} {...props} />;
   return <input className={clsx(inputCls, className)} {...props} />;
+}
+
+// Date box that always reads and accepts dd/mm/yyyy (the browser's own date box follows the computer's
+// language, e.g. mm/dd/yyyy on English-US Windows). Callers still get and pass yyyy-mm-dd.
+const toDmy = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}` : '');
+export function parseDmy(text) {
+  const m = String(text).trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (!m) return null;
+  const [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function DateInput({ className, value, onChange, min, max, name, disabled, type, ...props }) { // eslint-disable-line no-unused-vars
+  const picker = useRef(null);
+  const [text, setText] = useState(toDmy(value));
+  const [bad, setBad] = useState(false);
+  useEffect(() => {
+    setText(toDmy(value));
+    setBad(false);
+  }, [value]);
+  const emit = (v) => onChange?.({ target: { name, value: v }, currentTarget: { name, value: v } });
+  const outOfRange = (v) => (min && v < min) || (max && v > max);
+  return (
+    <div className={clsx('relative w-full min-w-36', className)}>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="dd/mm/yyyy"
+        value={text}
+        disabled={disabled}
+        aria-invalid={bad || undefined}
+        className={clsx(inputCls, 'pr-9', bad && 'ring-rose-400')}
+        onChange={(e) => {
+          setText(e.target.value);
+          const v = parseDmy(e.target.value);
+          if (v && !outOfRange(v)) {
+            setBad(false);
+            emit(v);
+          } else if (!e.target.value) emit('');
+        }}
+        onBlur={() => {
+          const v = parseDmy(text);
+          setBad(Boolean(text) && (!v || outOfRange(v)));
+        }}
+        {...props}
+      />
+      <button
+        type="button"
+        disabled={disabled}
+        tabIndex={-1}
+        aria-label="Pick a date"
+        className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 disabled:opacity-50"
+        onClick={() => {
+          try {
+            picker.current.showPicker();
+          } catch {
+            picker.current.focus();
+          }
+        }}
+      >
+        <CalendarDays className="size-4" />
+      </button>
+      {/* The browser's calendar, opened by the button; it keeps the yyyy-mm-dd value for scripts and tests. */}
+      <input
+        ref={picker}
+        type="date"
+        tabIndex={-1}
+        aria-hidden="true"
+        value={value || ''}
+        min={min}
+        max={max}
+        disabled={disabled}
+        onChange={(e) => emit(e.target.value)}
+        className="pointer-events-none absolute right-0 bottom-0 h-px w-px opacity-0"
+      />
+    </div>
+  );
 }
 
 export function Select({ className, children, ...props }) {

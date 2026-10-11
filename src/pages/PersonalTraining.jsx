@@ -59,7 +59,7 @@ function ActivePackages() {
     <Card padded={false}>
       <Table
         rows={data?.items}
-        empty={<EmptyState title="No active PT packages" />}
+        empty={<EmptyState title="No active PT packages">Sell a PT package from the member's page, Personal training tab.<div><Button size="sm" variant="secondary" className="mt-3" onClick={() => navigate('/admin/members')}>Go to members</Button></div></EmptyState>}
         columns={[
           {
             key: 'm',
@@ -238,7 +238,7 @@ function Packages() {
     >
       <Table
         rows={data}
-        empty={<EmptyState title="No PT packages yet" />}
+        empty={<EmptyState title="No PT packages yet">Create packages like “12 sessions in 60 days” to sell to members.<div>{can('pt.manage') && (<Button size="sm" className="mt-3" onClick={() => setEdit('new')}><Plus className="size-4" /> New package</Button>)}</div></EmptyState>}
         columns={[
           { key: 'name', label: 'Package', render: (p) => <b>{p.name}</b> },
           { key: 's', label: 'Sessions', render: (p) => p.sessions },
