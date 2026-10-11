@@ -23,6 +23,8 @@ const Messages = lazy(() => import('./pages/Messages'));
 const PersonalTraining = lazy(() => import('./pages/PersonalTraining'));
 const FitnessLibrary = lazy(() => import('./pages/fitness/FitnessLibrary'));
 const PortalFitness = lazy(() => import('./pages/portal/PortalFitness'));
+const Classes = lazy(() => import('./pages/Classes'));
+const PortalClasses = lazy(() => import('./pages/portal/PortalClasses'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 const PortalHistory = lazy(() => import('./pages/portal/PortalHistory'));
@@ -53,6 +55,7 @@ export const router = createBrowserRouter([
       { path: 'messages', element: s(<Messages />) },
       { path: 'pt', element: s(<PersonalTraining />) },
       { path: 'fitness', element: s(<FitnessLibrary />) },
+      { path: 'classes', element: s(<Classes />) },
     ],
   },
   { path: '/portal/login', element: s(<PortalLogin />) },
@@ -64,6 +67,7 @@ export const router = createBrowserRouter([
       { path: 'history', element: s(<PortalHistory />) },
       { path: 'renew', element: s(<PortalRenew />) },
       { path: 'fitness', element: s(<PortalFitness />) },
+      { path: 'classes', element: s(<PortalClasses />) },
     ],
   },
   { path: '*', element: <Navigate to="/admin" replace /> },

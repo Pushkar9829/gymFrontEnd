@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useLocation, useNavigate } from 'react-route
 import clsx from 'clsx';
 import {
   LayoutDashboard, Users, ScanLine, CalendarCheck, CreditCard, Tags, UserPlus, Wallet, BarChart3,
-  Fingerprint, Settings, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad,
+  Fingerprint, Settings, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useBranches, useApi, useAction } from '../lib/hooks';
@@ -17,6 +17,7 @@ const NAV = [
   { to: '/admin/members', label: 'Members', icon: Users, perm: 'members.read' },
   { to: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, perm: 'attendance.read' },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard, perm: 'payments.read' },
+  { to: '/admin/classes', label: 'Classes', icon: CalendarDays, perm: 'classes.read' },
   { to: '/admin/pt', label: 'Personal training', icon: HeartPulse, perm: 'pt.read' },
   { to: '/admin/fitness', label: 'Workouts & diet', icon: Salad, perm: 'fitness.read' },
   { to: '/admin/leads', label: 'Leads', icon: UserPlus, perm: 'leads.read' },
