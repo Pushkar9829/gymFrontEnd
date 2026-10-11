@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, NavLink, Outlet } from 'react-router';
 import clsx from 'clsx';
-import { Home, History, LogOut } from 'lucide-react';
+import { Home, History, LogOut, Dumbbell } from 'lucide-react';
 import { useMemberAuth } from '../store/auth';
 import { PageLoader } from '../components/ui';
 
@@ -22,6 +22,9 @@ export default function PortalLayout() {
       <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <NavLink to="/portal" end className={tab}>
           <Home className="size-5" /> Home
+        </NavLink>
+        <NavLink to="/portal/fitness" className={tab}>
+          <Dumbbell className="size-5" /> My plan
         </NavLink>
         <NavLink to="/portal/history" className={tab}>
           <History className="size-5" /> History
