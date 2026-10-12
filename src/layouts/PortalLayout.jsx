@@ -3,6 +3,8 @@ import { Navigate, NavLink, Outlet } from 'react-router';
 import clsx from 'clsx';
 import { Home, History, LogOut, Dumbbell, CalendarDays } from 'lucide-react';
 import { useMemberAuth } from '../store/auth';
+import { memberApi } from '../lib/api';
+import { disablePush, registerServiceWorker } from '../lib/pwa';
 import { PageLoader } from '../components/ui';
 
 export default function PortalLayout() {
@@ -10,6 +12,10 @@ export default function PortalLayout() {
   useEffect(() => {
     if (status === 'loading') bootstrap();
   }, [status, bootstrap]);
+  // Installable app + offline start (production builds; development uses Vite's own server).
+  useEffect(() => {
+    if (status === 'authed' && import.meta.env.PROD) registerServiceWorker();
+  }, [status]);
   if (status === 'loading') return <PageLoader />;
   if (status === 'guest') return <Navigate to="/portal/login" replace />;
 
@@ -32,7 +38,7 @@ export default function PortalLayout() {
         <NavLink to="/portal/history" className={tab}>
           <History className="size-5" /> History
         </NavLink>
-        <button onClick={logout} className="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium text-slate-500">
+        <button onClick={() => disablePush(memberApi.client).finally(logout)} className="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium text-slate-500">
           <LogOut className="size-5" /> Log out
         </button>
       </nav>

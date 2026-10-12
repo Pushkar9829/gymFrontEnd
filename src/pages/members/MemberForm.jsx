@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,6 +8,7 @@ import { useAction, useBranches, useDefaultBranchId } from '../../lib/hooks';
 import { ymd } from '../../lib/format';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../components/ui';
 import PhotoUpload from '../../components/PhotoUpload';
+import MemberPicker from '../../components/MemberPicker';
 
 const schema = z.object({
   branchId: z.string().min(1, 'Choose a branch'),
@@ -32,6 +34,9 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
   const defaultBranch = useDefaultBranchId();
   const { data: trainers } = useQuery({ queryKey: ['trainers'], queryFn: () => get('/users/trainers'), enabled: open });
   const { data: companies } = useQuery({ queryKey: ['companies'], queryFn: () => get('/companies'), enabled: open });
+  const { data: gym } = useQuery({ queryKey: ['settings'], queryFn: () => get('/settings'), enabled: open && !member });
+  const referralsOn = !member && gym?.settings?.referral?.enabled !== false;
+  const [referrer, setReferrer] = useState(null);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -59,6 +64,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
     success: member ? 'Member updated' : 'Member registered',
     invalidate: ['members', 'member', 'dashboard'],
     onSuccess: (data) => {
+      setReferrer(null);
       onSaved?.(data);
       onClose();
     },
@@ -81,6 +87,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       cardNo: v.cardNo || null,
       emergencyContact: { name: v.ecName, phone: v.ecPhone, relation: v.ecRelation },
     };
+    if (referralsOn && referrer) body.referredBy = referrer._id;
     save.mutate(body);
   };
 
@@ -144,6 +151,13 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
             ))}
           </Select>
         </Field>
+        {referralsOn && (
+          <div className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Referred by (optional)</span>
+            <MemberPicker value={referrer} onChange={setReferrer} placeholder="Search the member who referred them, or type their code" />
+            <span className="mt-1 block text-xs text-slate-500">They get free days once this member's first membership is paid</span>
+          </div>
+        )}
         <Field label="How did they hear about us?">
           <Select {...register('source')}>
             {['walk-in', 'referral', 'instagram', 'facebook', 'website', 'phone', 'other'].map((s) => (

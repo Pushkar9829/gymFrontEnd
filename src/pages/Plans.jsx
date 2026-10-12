@@ -9,7 +9,7 @@ import Coupons from './Coupons';
 import Companies from './Companies';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PageLoader, Select, Textarea, Toggle } from '../components/ui';
 
-const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, accessStart: '', accessEnd: '', deviceTimezoneId: 1, maxMembers: 1, isActive: true };
+const empty = { name: '', description: '', durationValue: 1, durationUnit: 'month', price: '', joiningFee: '', taxPercent: '', freezeDaysAllowed: 0, maxFreezes: 1, accessStart: '', accessEnd: '', deviceTimezoneId: 1, maxMembers: 1, isActive: true, sellOnline: false };
 
 function PlanForm({ plan, onClose }) {
   const [f, setF] = useState(
@@ -39,6 +39,7 @@ function PlanForm({ plan, onClose }) {
       deviceTimezoneId: Number(f.deviceTimezoneId) || 1,
       maxMembers: Number(f.maxMembers) || 1,
       isActive: f.isActive,
+      sellOnline: Boolean(f.sellOnline),
     });
   return (
     <Modal
@@ -103,6 +104,10 @@ function PlanForm({ plan, onClose }) {
           <Textarea value={f.description || ''} onChange={set('description')} />
         </Field>
         <Toggle checked={f.isActive} onChange={(v) => setF({ ...f, isActive: v })} label="Available for new memberships" />
+        <div>
+          <Toggle checked={Boolean(f.sellOnline)} onChange={(v) => setF({ ...f, sellOnline: v })} label="Sell online" />
+          <p className="mt-1 text-xs text-slate-500">Visitors can buy it on the public Join page (needs online payments set up)</p>
+        </div>
       </div>
     </Modal>
   );
@@ -142,7 +147,10 @@ export default function Plans() {
                     {p.durationValue > 1 ? 's' : ''}
                   </p>
                 </div>
-                {!p.isActive && <Badge status="cancelled">Inactive</Badge>}
+                <div className="flex flex-col items-end gap-1">
+                  {!p.isActive && <Badge status="cancelled">Inactive</Badge>}
+                  {p.sellOnline && p.isActive && <Badge status="allow">Sold online</Badge>}
+                </div>
               </div>
               <p className="mt-3 text-2xl font-bold text-brand-800">{inr(p.price)}</p>
               <ul className="mt-2 space-y-0.5 text-sm text-slate-600">

@@ -9,6 +9,7 @@ import { Button, Card, EmptyState, Field, Input, Modal, Select, Table } from '..
 import { WorkoutBuilder, DietBuilder } from './Builders';
 import { WorkoutView, DietView, WeightChart } from './PlanViews';
 import ProgressNotes from './ProgressNotes';
+import { StreakSummary, WorkoutHistory } from './WorkoutLogs';
 
 function AssignTemplate({ kind, memberId }) {
   const path = kind === 'workout' ? 'workout-plans' : 'diet-plans';
@@ -82,6 +83,7 @@ export default function MemberFitness({ member }) {
   const { data: workouts } = useQuery({ queryKey: ['fitness', 'workout-plans', member._id], queryFn: () => get('/fitness/workout-plans', { memberId: member._id }) });
   const { data: diets } = useQuery({ queryKey: ['fitness', 'diet-plans', member._id], queryFn: () => get('/fitness/diet-plans', { memberId: member._id }) });
   const { data: measurements } = useQuery({ queryKey: ['fitness', 'measurements', member._id], queryFn: () => get('/fitness/measurements', { memberId: member._id }) });
+  const { data: logs } = useQuery({ queryKey: ['fitness', 'workout-logs', member._id], queryFn: () => get('/fitness/workout-logs', { memberId: member._id }) });
   const remove = useAction((id) => del(`/fitness/measurements/${id}`), { success: 'Removed', invalidate: ['fitness'] });
   const workout = workouts?.find((p) => p.isActive);
   const diet = diets?.find((p) => p.isActive);
@@ -180,6 +182,10 @@ export default function MemberFitness({ member }) {
         </div>
       </Card>
       <ProgressNotes member={member} measurements={measurements} />
+      <Card title="Workout log (from the member app)" className="lg:col-span-2" padded={false}>
+        {logs?.summary && <StreakSummary summary={logs.summary} className="border-b border-slate-100 p-4" />}
+        <WorkoutHistory logs={logs?.logs} empty={<EmptyState title="No workouts logged yet">The member ticks off exercises in the app under My plan → Workout.</EmptyState>} />
+      </Card>
       {modal?.type === 'workout' && <WorkoutBuilder plan={modal.plan} memberId={member._id} onClose={() => setModal(null)} />}
       {modal?.type === 'diet' && <DietBuilder plan={modal.plan} memberId={member._id} onClose={() => setModal(null)} />}
       {modal?.type === 'measure' && <MeasurementForm memberId={member._id} onClose={() => setModal(null)} />}

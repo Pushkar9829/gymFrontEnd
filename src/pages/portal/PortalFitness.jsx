@@ -1,20 +1,25 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { memberApi, errorMessage } from '../../lib/api';
 import { fmtDate, ymd } from '../../lib/format';
 import { Button, Card, EmptyState, Input, Modal, PageLoader, Tabs } from '../../components/ui';
 import { PrivateImage } from '../../components/PrivateImage';
-import { WorkoutView, DietView, WeightChart } from '../fitness/PlanViews';
+import { DietView, WeightChart } from '../fitness/PlanViews';
+import { StreakSummary } from '../fitness/WorkoutLogs';
+import PortalWorkout from './PortalWorkout';
 import { portalGet } from './PortalHome';
 
 export default function PortalFitness() {
-  const [tab, setTab] = useState('workout');
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(['workout', 'diet', 'progress'].includes(params.get('tab')) ? params.get('tab') : 'workout');
   const [weight, setWeight] = useState('');
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['portal', 'fitness'], queryFn: () => portalGet('/me/fitness') });
   const { data: notes } = useQuery({ queryKey: ['portal', 'progress'], queryFn: () => portalGet('/me/progress'), enabled: tab === 'progress' });
+  const { data: summary } = useQuery({ queryKey: ['portal', 'progress-summary'], queryFn: () => portalGet('/me/progress-summary'), enabled: tab === 'progress' });
   const [photo, setPhoto] = useState(null);
   if (isLoading) return <PageLoader />;
 
@@ -44,10 +49,14 @@ export default function PortalFitness() {
           { value: 'progress', label: 'Progress' },
         ]}
       />
-      {tab === 'workout' && (data.workout ? <WorkoutView plan={data.workout} /> : <EmptyState title="No workout plan yet">Ask your trainer to set one up.</EmptyState>)}
+      {tab === 'workout' && <PortalWorkout />}
       {tab === 'diet' && (data.diet ? <DietView plan={data.diet} /> : <EmptyState title="No diet plan yet">Ask your trainer to set one up.</EmptyState>)}
       {tab === 'progress' && (
         <div className="space-y-4">
+          <Card title="My progress">
+            {summary ? <StreakSummary summary={summary} /> : <p className="text-sm text-slate-500">Loading…</p>}
+            <p className="mt-2 text-xs text-slate-500">A week counts towards your streak when you visit the gym {summary?.weeklyTarget || 3} days (Monday to Sunday).</p>
+          </Card>
           <Card title="Log today's weight">
             <div className="flex gap-2">
               <Input type="number" step="0.1" placeholder="kg" value={weight} onChange={(e) => setWeight(e.target.value)} />

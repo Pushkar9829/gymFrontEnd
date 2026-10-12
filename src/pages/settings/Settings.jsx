@@ -24,6 +24,9 @@ function GymSettings() {
   const setTrial = (k, v) => setS('trial', { ...trial, [k]: v });
   const pt = f.settings.pt || {};
   const setPt = (k, v) => setS('pt', { ...pt, [k]: v });
+  const referral = f.settings.referral || {};
+  const setReferral = (k, v) => setS('referral', { ...referral, [k]: v });
+  const streaks = f.settings.streaks || {};
   const editable = can('settings.write');
   const dirty = JSON.stringify(f) !== JSON.stringify({ ...data, settings: { ...data.settings, reminderDays: (data.settings?.reminderDays || []).join(', ') } });
 
@@ -74,6 +77,12 @@ function GymSettings() {
           <Toggle checked={f.settings.sendEmails} onChange={(v) => setS('sendEmails', v)} disabled={!editable} label="Send emails (invoices, reminders, birthdays)" />
           <Toggle checked={!!f.settings.channels?.sms} onChange={(v) => setS('channels', { ...f.settings.channels, sms: v })} disabled={!editable} label="Send SMS (reminders, receipts, login codes)" />
           <Toggle checked={!!f.settings.channels?.whatsapp} onChange={(v) => setS('channels', { ...f.settings.channels, whatsapp: v })} disabled={!editable} label="Send WhatsApp messages" />
+          <div>
+            <Toggle checked={f.settings.channels?.push !== false} onChange={(v) => setS('channels', { ...f.settings.channels, push: v })} disabled={!editable} label="Push notifications in the member app" />
+            <p className="mt-1 text-xs text-slate-500">
+              {data.pushReady ? 'Members who turn on notifications in the app get reminders there too.' : 'Not set up on the server yet (VAPID keys). See the deployment guide.'}
+            </p>
+          </div>
           <Toggle checked={f.settings.memberOtpLogin !== false} onChange={(v) => setS('memberOtpLogin', v)} disabled={!editable} label="Members can log in with a one-time code" />
           <p className="text-xs text-slate-500">Changing entry rules re-checks every member and updates the biometric devices immediately.</p>
         </div>
@@ -152,6 +161,37 @@ function GymSettings() {
             </div>
           </div>
         </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">Refer a friend</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="sm:col-span-3">
+              <Toggle checked={referral.enabled !== false} onChange={(v) => setReferral('enabled', v)} disabled={!editable} label="Members can invite friends with their referral code" />
+            </div>
+            <Field label="Free days for the member who refers" hint="Added once the friend's first membership is paid">
+              <Input type="number" min="0" max="90" value={referral.rewardDays ?? 15} onChange={(e) => setReferral('rewardDays', e.target.value)} disabled={!editable} />
+            </Field>
+            <Field label="Discount for the new friend (%)" hint="On their first membership. 0 = none">
+              <Input type="number" min="0" max="50" value={referral.newMemberDiscountPercent ?? 0} onChange={(e) => setReferral('newMemberDiscountPercent', e.target.value)} disabled={!editable} />
+            </Field>
+            <Field label="Most rewards per member per year">
+              <Input type="number" min="1" max="100" value={referral.maxPerYear ?? 12} onChange={(e) => setReferral('maxPerYear', e.target.value)} disabled={!editable} />
+            </Field>
+          </div>
+        </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">Member app streaks</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Visits a week for a streak" hint="A week (Mon–Sun) counts when the member comes this many days">
+              <Select value={streaks.weeklyVisits ?? 3} onChange={(e) => setS('streaks', { ...streaks, weeklyVisits: Number(e.target.value) })} disabled={!editable}>
+                {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                  <option key={n} value={n}>
+                    {n} day{n > 1 ? 's' : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </div>
       </Card>
       {editable && (
         <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 rounded-xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-200 backdrop-blur lg:col-span-2">
@@ -171,7 +211,7 @@ function GymSettings() {
                 graceDays: Number(f.settings.graceDays),
                 blockOnDues: f.settings.blockOnDues,
                 sendEmails: f.settings.sendEmails,
-                channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp },
+                channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp, push: f.settings.channels?.push !== false },
                 memberOtpLogin: f.settings.memberOtpLogin !== false,
                 reminderDays: String(f.settings.reminderDays).split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
                 discountLimitPercent: Number(f.settings.discountLimitPercent ?? 10),
@@ -191,6 +231,13 @@ function GymSettings() {
                   maxPerDay: Number(pt.maxPerDay ?? 1),
                   noShowUsesSession: pt.noShowUsesSession !== false,
                 },
+                referral: {
+                  enabled: referral.enabled !== false,
+                  rewardDays: Number(referral.rewardDays ?? 15),
+                  newMemberDiscountPercent: Number(referral.newMemberDiscountPercent ?? 0),
+                  maxPerYear: Math.max(1, Number(referral.maxPerYear ?? 12)),
+                },
+                streaks: { weeklyVisits: Number(streaks.weeklyVisits ?? 3) },
               },
             })
           }

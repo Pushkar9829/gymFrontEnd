@@ -21,6 +21,7 @@ import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 import { TrialActions, TrialBadge } from '../Trials';
 import { useMemberWaiver, WaiverBadge, WaiverActions } from './MemberWaiver';
+import { ReferralBadge } from '../ReportsReferrals';
 
 function trialState(member) {
   const t = member.trial || {};
@@ -99,6 +100,11 @@ function Memberships({ subscriptions, member, onAction }) {
                   )}
                 </p>
                 {s.cancelReason && <p className="text-xs text-slate-500">Cancelled: {s.cancelReason}</p>}
+                {s.extensions?.map((x) => (
+                  <p key={x._id} className={clsx('text-xs', x.days > 0 ? 'text-emerald-700' : 'text-rose-600')}>
+                    {x.days > 0 ? `+${x.days}` : x.days} days · {x.reason}
+                  </p>
+                ))}
                 {s.groupOf && <p className="text-xs text-emerald-700">Covered by a family plan (billed to the main member)</p>}
                 {s.familyMemberIds?.length > 0 && <p className="text-xs text-emerald-700">Family plan: also covers {s.familyMemberIds.length} other member(s)</p>}
                 {s.billTo === 'company' && <p className="text-xs text-indigo-700">Billed to company</p>}
@@ -266,7 +272,7 @@ export default function MemberDetail() {
   }, [addNow, setParams]);
 
   if (isLoading || !data) return <PageLoader />;
-  const { member, access, subscriptions, deviceUsers } = data;
+  const { member, access, subscriptions, deviceUsers, referral } = data;
   const isFirst = subscriptions.length === 0;
 
   const onAction = (type, sub, extra) => {
@@ -359,6 +365,19 @@ export default function MemberDetail() {
                 ['Health notes', member.healthNotes],
                 ['Last visit', member.lastVisitAt && fmtDateTime(member.lastVisitAt)],
                 ['RFID card', member.cardNo],
+                ['Referral code', member.referralCode && <span className="font-mono">{member.referralCode}</span>],
+                [
+                  'Referred by',
+                  member.referredBy && (
+                    <span className="flex flex-wrap items-center gap-1">
+                      <button className="font-medium text-brand-700 hover:underline" onClick={() => navigate(`/admin/members/${member.referredBy._id}`)}>
+                        {member.referredBy.name} #{member.referredBy.memberCode}
+                      </button>
+                      {referral?.record && <ReferralBadge status={referral.record.status} />}
+                    </span>
+                  ),
+                ],
+                ['Friends referred', referral?.friendsRewarded ? `${referral.friendsRewarded} rewarded` : null],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
                   <dt className="w-28 shrink-0 text-slate-500">{k}</dt>

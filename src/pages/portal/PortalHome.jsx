@@ -5,10 +5,11 @@ import { toast } from 'sonner';
 import { openCheckout } from '../../lib/razorpay';
 import { errorMessage } from '../../lib/api';
 import clsx from 'clsx';
-import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight, CalendarPlus, Snowflake, FileSignature } from 'lucide-react';
+import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight, CalendarPlus, Snowflake, FileSignature, Flame, Gift, Award } from 'lucide-react';
 import { memberApi, openFile } from '../../lib/api';
 import { inr, fmtDate, fmtTime } from '../../lib/format';
 import { Avatar, Badge, Button, Card, PageLoader } from '../../components/ui';
+import AppSetup from './AppSetup';
 
 export const portalGet = (url, params) => memberApi.client.get(url, { params }).then((r) => r.data.data);
 
@@ -21,6 +22,8 @@ export default function PortalHome() {
   const { data: waiver } = useQuery({ queryKey: ['portal', 'waiver'], queryFn: () => portalGet('/me/waiver') });
   const { data: freeze } = useQuery({ queryKey: ['portal', 'freeze'], queryFn: () => portalGet('/me/freeze') });
   const { data: ptBooking } = useQuery({ queryKey: ['portal', 'pt-booking'], queryFn: () => portalGet('/me/pt-booking') });
+  const { data: progress } = useQuery({ queryKey: ['portal', 'progress-summary'], queryFn: () => portalGet('/me/progress-summary') });
+  const { data: referral } = useQuery({ queryKey: ['portal', 'referral'], queryFn: () => portalGet('/me/referral') });
   const navigate = useNavigate();
   const signNow = Boolean(waiver?.pending && waiver?.ask);
   // First visit in this session: open the waiver straight away while it is unsigned ("Later" comes back here).
@@ -111,6 +114,24 @@ export default function PortalHome() {
         )}
       </div>
 
+      {progress && (
+        <Link to="/portal/fitness?tab=progress" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200" aria-label="My progress">
+          <span className="rounded-lg bg-orange-50 p-2 text-orange-600">
+            <Flame className="size-5" />
+          </span>
+          <span className="flex-1 text-sm">
+            <b className="block">
+              {progress.currentStreak}-week streak · {progress.thisWeekVisits}/{progress.weeklyTarget} visits this week
+            </b>
+            <span className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
+              <Award className="size-3.5 text-amber-600" /> {progress.earned} badge{progress.earned === 1 ? '' : 's'}
+              {progress.badges.filter((b) => b.earned).slice(-1).map((b) => ` · ${b.label}`)}
+            </span>
+          </span>
+          <ChevronRight className="size-5 text-slate-400" />
+        </Link>
+      )}
+
       <Card>
         <div className="flex flex-col items-center text-center">
           <img src={card.qr} alt="Membership QR code" className="size-52" />
@@ -118,6 +139,21 @@ export default function PortalHome() {
           <p className="text-xs text-slate-500">Show this at reception if the biometric scanner is unavailable.</p>
         </div>
       </Card>
+
+      {referral?.enabled && (
+        <Link to="/portal/invite" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <span className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+            <Gift className="size-5" />
+          </span>
+          <span className="flex-1 text-sm">
+            <b className="block">Invite a friend</b>
+            <span className="text-xs text-slate-500">Get {referral.rewardDays} free days when they join</span>
+          </span>
+          <ChevronRight className="size-5 text-slate-400" />
+        </Link>
+      )}
+
+      <AppSetup />
 
       {activePt.length > 0 && (
         <Card title="Personal training">

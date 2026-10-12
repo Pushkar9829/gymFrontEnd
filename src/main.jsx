@@ -4,9 +4,11 @@ import { RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { router } from './router';
+import { initPwa } from './lib/pwa';
 import './index.css';
 // Error monitoring is loaded only when configured, to keep the bundle small.
 if (import.meta.env.VITE_SENTRY_DSN) import('./lib/sentry');
+initPwa();
 
 const queryClient = new QueryClient({
   defaultOptions: {

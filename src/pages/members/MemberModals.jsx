@@ -5,6 +5,7 @@ import { useAction } from '../../lib/hooks';
 import { inr, toPaise, toRupees, ymd, fmtDate, PAYMENT_MODES } from '../../lib/format';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '../../components/ui';
 import { DiscountApproval, UsableApprovals, needsApproval } from '../../components/DiscountApproval';
+import MemberPicker from '../../components/MemberPicker';
 
 const INVALIDATE = ['member', 'members', 'dashboard', 'payments'];
 
@@ -45,6 +46,11 @@ export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
   const [pay, setPay] = useState({ amount: '', mode: 'upi', reference: '' });
   const [needApproval, setNeedApproval] = useState(false);
   const [approvalId, setApprovalId] = useState('');
+  const [referrer, setReferrer] = useState(null);
+  const referral = gym?.settings?.referral || {};
+  // "Referred by" can be added up to the first membership.
+  const askReferrer = isFirst && !member.referredBy && referral.enabled !== false && !member.isTrial;
+  const referralPct = (member.referredBy || referrer) && isFirst ? referral.newMemberDiscountPercent || 0 : 0;
 
   const plan = plans?.find((p) => p._id === planId);
   const calc = useMemo(() => {
@@ -67,6 +73,7 @@ export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
       setPay({ amount: '', mode: 'upi', reference: '' });
       setNeedApproval(false);
       setApprovalId('');
+      setReferrer(null);
       onSaved?.(d);
     },
     onError: (err) => needsApproval(err) && setNeedApproval(true),
@@ -81,6 +88,7 @@ export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
     familyMemberIds: plan?.maxMembers > 1 ? family.map((x) => x._id) : [],
     payment: Number(pay.amount) > 0 ? { amount: toPaise(pay.amount), mode: pay.mode, reference: pay.reference || undefined } : undefined,
     approvalId: approvalId || undefined,
+    referredBy: askReferrer && referrer ? referrer._id : undefined,
     ...extra,
   });
 
@@ -142,6 +150,12 @@ export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
             <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
           </Field>
         </div>
+        {askReferrer && (
+          <div>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Referred by (optional)</span>
+            <MemberPicker value={referrer} onChange={setReferrer} placeholder="Search the member who referred them, or type their code" />
+          </div>
+        )}
         {plan?.maxMembers > 1 && (
           <div className="rounded-xl bg-emerald-50 p-3">
             <p className="text-sm font-medium text-emerald-900">
@@ -186,6 +200,7 @@ export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
             {calc.tax > 0 && <Row label={`GST ${calc.taxPercent}%`} value={inr(calc.tax)} />}
             <Row label={<b>Total</b>} value={<b>{inr(calc.total)}</b>} />
             {member.companyId?.discountPercent > 0 && <p className="text-xs text-emerald-700">+ {member.companyId.discountPercent}% {member.companyId.name} discount applied on save</p>}
+            {referralPct > 0 && <p className="text-xs text-emerald-700">+ {referralPct}% referral discount applied on save</p>}
             <button type="button" className="mt-1 text-xs font-medium text-brand-700 hover:underline" onClick={() => setPay({ ...pay, amount: String(toRupees(calc.total)) })}>
               Received full amount
             </button>

@@ -43,6 +43,7 @@ const PortalRenew = lazy(() => import('./pages/portal/PortalRenew'));
 const PortalPt = lazy(() => import('./pages/portal/PortalPt'));
 const PortalFreeze = lazy(() => import('./pages/portal/PortalFreeze'));
 const PortalWaiver = lazy(() => import('./pages/portal/PortalWaiver'));
+const PortalInvite = lazy(() => import('./pages/portal/PortalInvite'));
 
 const s = (el) => <Suspense fallback={<PageLoader />}>{el}</Suspense>;
 
@@ -96,6 +97,7 @@ export const router = createBrowserRouter([
       { path: 'pt', element: s(<PortalPt />) },
       { path: 'freeze', element: s(<PortalFreeze />) },
       { path: 'waiver', element: s(<PortalWaiver />) },
+      { path: 'invite', element: s(<PortalInvite />) },
     ],
   },
   { path: '*', element: <Navigate to="/admin" replace /> },

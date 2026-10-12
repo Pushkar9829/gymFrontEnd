@@ -8,6 +8,7 @@ import { useAuth } from '../store/auth';
 import { inr, fmtDate, ymd } from '../lib/format';
 import { Button, Card, EmptyState, Input, PageHeader, StatCard, Table, Tabs } from '../components/ui';
 import { StaffReport, RetentionReport, GstReport } from './ReportsOwner';
+import { ReferralsReport } from './ReportsReferrals';
 
 const rupees = (v) => Math.round(v / 100);
 const DENY_LABEL = {
@@ -237,6 +238,7 @@ export default function Reports() {
           { value: 'branches', label: 'Branches' },
           { value: 'staff', label: 'Staff performance' },
           { value: 'retention', label: 'Retention' },
+          { value: 'referrals', label: 'Referrals' },
           { value: 'gst', label: 'GST & Tally' },
         ]}
       />
@@ -249,6 +251,7 @@ export default function Reports() {
       {tab === 'branches' && <Branches from={from} to={to} />}
       {tab === 'staff' && <StaffReport from={from} to={to} />}
       {tab === 'retention' && <RetentionReport />}
+      {tab === 'referrals' && <ReferralsReport />}
       {tab === 'gst' && <GstReport />}
     </div>
   );

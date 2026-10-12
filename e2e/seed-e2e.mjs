@@ -117,5 +117,24 @@ await PtPurchase.create({
   validFrom: startOfDay(), validTo: addDays(startOfDay(), 59), price: 800000, taxPercent: 18, taxAmount: 144000,
   totalAmount: 944000, paidAmount: 944000, dueAmount: 0,
 });
+// 13-member-growth: a member-app user with a workout plan and gym visits in the last weeks (streak), who refers
+// a friend at the desk. No trainer, so Arjun Trainer still sees only Rahul.
+const { WorkoutPlan } = await mod('modules/fitness/fitness.model.js');
+const { Attendance } = await mod('modules/attendance/attendance.model.js');
+const { dayjs, tz } = await mod('utils/dates.js');
+const gita = await addMember('Gita Growth', '9876515001', { portalEnabled: true, passwordHash: await hashPassword('Member@123') });
+await createSubscription({ memberId: gita._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -5)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+await WorkoutPlan.create({
+  memberId: gita._id, branchId: branch._id, name: 'Push Pull', goal: 'strength', level: 'beginner', createdBy: owner._id,
+  days: [
+    { name: 'Day 1 - Push', exercises: [{ name: 'Bench press', sets: 3, reps: '10', weight: '40 kg' }, { name: 'Shoulder press', sets: 3, reps: '12' }] },
+    { name: 'Day 2 - Pull', exercises: [{ name: 'Barbell row', sets: 4, reps: '10' }] },
+  ],
+});
+// 3 visits in each of the last two full weeks (Mon-Sun, IST) and 4 earlier: 10 visits, a 2-week streak.
+const monday = dayjs().tz(tz).startOf('day').subtract((dayjs().tz(tz).day() + 6) % 7, 'day');
+const visitDays = [1, 3, 7, 8, 10, 14, 35, 37, 50, 52].map((n) => monday.subtract(n, 'day'));
+await Attendance.insertMany(visitDays.map((d) => ({ memberId: gita._id, branchId: branch._id, day: d.format('YYYY-MM-DD'), checkInAt: d.add(7, 'hour').toDate(), method: 'manual' })));
+await Member.updateOne({ _id: gita._id }, { lastVisitAt: visitDays[0].add(7, 'hour').toDate() });
 console.log('E2E seed complete');
 await disconnectDb();

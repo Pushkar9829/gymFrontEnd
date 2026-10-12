@@ -33,11 +33,11 @@ test('every staff screen fits a phone (no sideways scrolling)', async ({ page })
 });
 
 test('member app pages fit a phone (no sideways scrolling)', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   const watch = watchErrors(page);
   await loginMember(page);
   const problems = [];
-  for (const r of ['portal', 'portal/fitness', 'portal/classes', 'portal/history', 'portal/feedback', 'portal/pt', 'portal/freeze', 'portal/waiver']) {
+  for (const r of ['portal', 'portal/fitness', 'portal/fitness?tab=progress', 'portal/classes', 'portal/history', 'portal/feedback', 'portal/pt', 'portal/freeze', 'portal/waiver', 'portal/invite']) {
     await page.goto(`/${r}`);
     await waitIdle(page);
     const { scroll, width } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: window.innerWidth }));
