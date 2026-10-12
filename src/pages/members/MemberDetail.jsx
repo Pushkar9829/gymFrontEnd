@@ -11,7 +11,8 @@ import { get, post, put as apiPut, del, openFile } from '../../lib/api';
 import { useAction } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
 import { inr, fmtDate, fmtDateTime, fmtTime, daysUntil } from '../../lib/format';
-import { Avatar, Badge, Button, Card, EmptyState, Modal, PageLoader, Table, Tabs, Toggle } from '../../components/ui';
+import { Badge, Button, Card, EmptyState, Modal, PageLoader, Table, Tabs, Toggle } from '../../components/ui';
+import { MemberAvatar } from '../../components/MemberAvatar';
 import MemberForm from './MemberForm';
 import MemberPt from './MemberPt';
 import MemberDocuments from './MemberDocuments';
@@ -290,7 +291,7 @@ export default function MemberDetail() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <div className="flex flex-wrap items-start gap-4">
-            <Avatar name={member.name} src={member.photoUrl} size="lg" />
+            <MemberAvatar member={member} size="lg" />
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-semibold text-slate-900">
                 {member.name} {member.isBlocked && <Badge status="deny">Blocked</Badge>}
@@ -354,7 +355,7 @@ export default function MemberDetail() {
           <AccessBanner access={access} member={member} />
           <MemberAutopay member={member} />
           <MemberLocker member={member} />
-          <MemberDocuments member={member} />
+          {can('members.documents') && <MemberDocuments member={member} />}
           <Card title="Details">
             <dl className="space-y-1.5 text-sm">
               {[

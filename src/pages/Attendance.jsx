@@ -6,7 +6,8 @@ import { openFile } from '../lib/api';
 import { fmtDateTime, fmtTime, ymd } from '../lib/format';
 import { useAuth } from '../store/auth';
 import StaffAttendance from './StaffAttendance';
-import { Avatar, Badge, Button, Card, EmptyState, Input, PageHeader, Pagination, Select, Spinner, Table, Tabs } from '../components/ui';
+import { Badge, Button, Card, EmptyState, Input, PageHeader, Pagination, Select, Spinner, Table, Tabs } from '../components/ui';
+import { MemberAvatar } from '../components/MemberAvatar';
 
 function Live() {
   const { data, isLoading } = useApi('attendance-live', '/attendance/live', {}, { refetchInterval: 30000 });
@@ -32,7 +33,7 @@ function Live() {
 const MemberCell = ({ m, trial }) =>
   m ? (
     <div className="flex items-center gap-2">
-      <Avatar name={m.name} src={m.photoUrl} size="sm" />
+      <MemberAvatar member={m} size="sm" />
       <div>
         <p className="font-medium text-slate-900">
           {m.name} {trial && <Badge status="trial">Trial</Badge>}

@@ -5,7 +5,8 @@ import { useApi, useAction } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
 import { openFile, post } from '../../lib/api';
 import { inr, fmtDate, daysUntil } from '../../lib/format';
-import { Avatar, Badge, Button, Card, Input, PageHeader, Pagination, Select, Spinner, Table, EmptyState } from '../../components/ui';
+import { Badge, Button, Card, Input, PageHeader, Pagination, Select, Spinner, Table, EmptyState } from '../../components/ui';
+import { MemberAvatar } from '../../components/MemberAvatar';
 import MemberForm from './MemberForm';
 import ImportMembers from './ImportMembers';
 
@@ -107,7 +108,7 @@ export default function MembersList() {
                   label: 'Member',
                   render: (m) => (
                     <div className="flex items-center gap-3">
-                      <Avatar name={m.name} src={m.photoUrl} size="sm" />
+                      <MemberAvatar member={m} size="sm" />
                       <div>
                         <p className="font-medium text-slate-900">
                           {m.name} {m.isBlocked && <Badge status="deny">Blocked</Badge>}

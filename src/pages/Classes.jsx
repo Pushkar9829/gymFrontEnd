@@ -7,7 +7,8 @@ import { get, post, put } from '../lib/api';
 import { useApi, useAction, useBranches, useDefaultBranchId } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { fmtTime, ymd } from '../lib/format';
-import { Avatar, Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Tabs, Toggle } from '../components/ui';
+import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Tabs, Toggle } from '../components/ui';
+import { MemberAvatar } from '../components/MemberAvatar';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -73,7 +74,7 @@ function SessionModal({ id, onClose }) {
           {bookings.map((b) => (
             <li key={b._id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
               <span className="flex items-center gap-2">
-                <Avatar name={b.memberId?.name} src={b.memberId?.photoUrl} size="sm" />
+                <MemberAvatar member={b.memberId} size="sm" />
                 <span className="text-sm">
                   {b.memberId?.name} <span className="text-slate-400">#{b.memberId?.memberCode}</span>
                 </span>

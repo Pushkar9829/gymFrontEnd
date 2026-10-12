@@ -7,7 +7,8 @@ import { get, post, errorMessage } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { useAction } from '../lib/hooks';
 import { inr, fmtTime, daysUntil } from '../lib/format';
-import { Avatar, Badge, Button, Card, Input, PageHeader } from '../components/ui';
+import { Badge, Button, Card, Input, PageHeader } from '../components/ui';
+import { MemberAvatar } from '../components/MemberAvatar';
 import { MembershipModal, PaymentModal } from './members/MemberModals';
 
 const RENEW_CODES = ['EXPIRED', 'NO_MEMBERSHIP', 'CANCELLED'];
@@ -187,7 +188,7 @@ export default function CheckIn() {
               {found?.items?.map((m) => (
                 <li key={m._id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar name={m.name} src={m.photoUrl} size="sm" />
+                    <MemberAvatar member={m} size="sm" />
                     <div className="min-w-0">
                       <p className="truncate font-medium">{m.name}</p>
                       <p className="text-xs text-slate-500">
@@ -217,7 +218,7 @@ export default function CheckIn() {
               <p className={clsx('mt-3 text-3xl font-bold', result.allowed ? 'text-emerald-700' : 'text-rose-700')}>{result.allowed ? 'ENTRY ALLOWED' : 'NO ENTRY'}</p>
               {result.member && (
                 <div className="mt-4 flex items-center gap-3">
-                  <Avatar name={result.member.name} src={result.member.photoUrl} size="lg" />
+                  <MemberAvatar member={result.member} size="lg" />
                   <div className="text-left">
                     <p className="text-lg font-semibold">{result.member.name}</p>
                     <p className="text-sm text-slate-600">

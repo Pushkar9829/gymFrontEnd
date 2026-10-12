@@ -7,7 +7,8 @@ import { del, get, post, put } from '../lib/api';
 import { useApi, useAction } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, fmtDate, fmtDateTime, toPaise, toRupees, ymd, daysUntil } from '../lib/format';
-import { Avatar, Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Spinner, StatCard, Table, Tabs, Textarea, Toggle } from '../components/ui';
+import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Spinner, StatCard, Table, Tabs, Textarea, Toggle } from '../components/ui';
+import { MemberAvatar } from '../components/MemberAvatar';
 import { PtSchedule, PtAvailability, BookSlotModal } from './pt/PtSchedule';
 
 export function LogSessionModal({ purchase, onClose }) {
@@ -68,7 +69,7 @@ function ActivePackages() {
             label: 'Member',
             render: (p) => (
               <button className="flex items-center gap-2 text-left" onClick={() => navigate(`/admin/members/${p.memberId?._id}`)}>
-                <Avatar name={p.memberId?.name} src={p.memberId?.photoUrl} size="sm" />
+                <MemberAvatar member={p.memberId} size="sm" />
                 <span>
                   <span className="block font-medium text-slate-900">{p.memberId?.name}</span>
                   <span className="text-xs text-slate-500">#{p.memberId?.memberCode}</span>

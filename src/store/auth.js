@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { staffApi, memberApi } from '../lib/api';
+import { clearPrivateImages } from '../lib/privateFiles';
 
 const readBranch = () => {
   try {
@@ -20,6 +21,7 @@ export const useAuth = create((set, get) => ({
   },
   clear: () => {
     staffApi.setToken(null);
+    clearPrivateImages(); // photos stay in memory only while logged in
     set({ user: null, status: 'guest' });
   },
   setBranch: (branchId) => {
@@ -64,6 +66,7 @@ export const useMemberAuth = create((set, get) => ({
   },
   clear: () => {
     memberApi.setToken(null);
+    clearPrivateImages(); // photos stay in memory only while logged in
     set({ member: null, status: 'guest' });
   },
   async bootstrap() {

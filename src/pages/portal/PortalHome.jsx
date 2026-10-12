@@ -8,7 +8,8 @@ import clsx from 'clsx';
 import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight, CalendarPlus, Snowflake, FileSignature, Flame, Gift, Award } from 'lucide-react';
 import { memberApi, openFile } from '../../lib/api';
 import { inr, fmtDate, fmtTime } from '../../lib/format';
-import { Avatar, Badge, Button, Card, PageLoader } from '../../components/ui';
+import { Badge, Button, Card, PageLoader } from '../../components/ui';
+import { MemberAvatar } from '../../components/MemberAvatar';
 import AppSetup from './AppSetup';
 
 export const portalGet = (url, params) => memberApi.client.get(url, { params }).then((r) => r.data.data);
@@ -65,7 +66,7 @@ export default function PortalHome() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Avatar name={member.name} src={member.photoUrl} />
+        <MemberAvatar member={member} client={memberApi.client} own />
         <div>
           <p className="text-xs text-slate-500">{gym.name}</p>
           <p className="text-lg font-semibold">Hi, {member.name.split(' ')[0]}</p>

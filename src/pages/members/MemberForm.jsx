@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { get, post, put } from '../../lib/api';
+import { toast } from 'sonner';
+import { del, get, post, put, errorMessage } from '../../lib/api';
 import { useAction, useBranches, useDefaultBranchId } from '../../lib/hooks';
 import { ymd } from '../../lib/format';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../components/ui';
 import PhotoUpload from '../../components/PhotoUpload';
+import { uploadMemberPhoto } from '../../components/PrivateImage';
 import MemberPicker from '../../components/MemberPicker';
 
 const schema = z.object({
@@ -26,7 +28,6 @@ const schema = z.object({
   source: z.string().optional(),
   companyId: z.string().optional(),
   cardNo: z.union([z.literal(''), z.string().regex(/^\d{4,20}$/, 'Digits only (4-20)')]).optional(),
-  photoUrl: z.string().optional(),
 });
 
 export default function MemberForm({ open, onClose, member, onSaved }) {
@@ -37,6 +38,10 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
   const { data: gym } = useQuery({ queryKey: ['settings'], queryFn: () => get('/settings'), enabled: open && !member });
   const referralsOn = !member && gym?.settings?.referral?.enabled !== false;
   const [referrer, setReferrer] = useState(null);
+  const [photo, setPhoto] = useState(null); // null = unchanged, { file, preview }, 'remove'
+  useEffect(() => {
+    if (open) setPhoto(null);
+  }, [open, member?._id]);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -56,19 +61,31 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       source: member?.source || 'walk-in',
       companyId: member?.companyId?._id || member?.companyId || '',
       cardNo: member?.cardNo || '',
-      photoUrl: member?.photoUrl || '',
     },
   });
 
-  const save = useAction((body) => (member ? put(`/members/${member._id}`, body) : post('/members', body)), {
-    success: member ? 'Member updated' : 'Member registered',
-    invalidate: ['members', 'member', 'dashboard'],
-    onSuccess: (data) => {
-      setReferrer(null);
-      onSaved?.(data);
-      onClose();
+  const save = useAction(
+    async (body) => {
+      const saved = member ? await put(`/members/${member._id}`, body) : await post('/members', body);
+      // The photo is a private file, uploaded once the member exists. A photo problem does not undo the save.
+      try {
+        if (photo?.file) await uploadMemberPhoto(saved._id, photo.file);
+        else if (photo === 'remove') await del(`/members/${saved._id}/photo`);
+      } catch (err) {
+        toast.error(`Member saved, but the photo was not: ${errorMessage(err)}`);
+      }
+      return saved;
     },
-  });
+    {
+      success: member ? 'Member updated' : 'Member registered',
+      invalidate: ['members', 'member', 'dashboard'],
+      onSuccess: (data) => {
+        setReferrer(null);
+        onSaved?.(data);
+        onClose();
+      },
+    },
+  );
 
   const submit = (v) => {
     const body = {
@@ -81,7 +98,6 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
       address: v.address,
       healthNotes: v.healthNotes,
       source: v.source,
-      photoUrl: v.photoUrl,
       trainerId: v.trainerId || null,
       companyId: v.companyId || null,
       cardNo: v.cardNo || null,
@@ -110,7 +126,7 @@ export default function MemberForm({ open, onClose, member, onSaved }) {
     >
       <form onSubmit={handleSubmit(submit)} className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <PhotoUpload value={watch('photoUrl')} name={watch('name')} onChange={(url) => setValue('photoUrl', url, { shouldDirty: true })} />
+          <PhotoUpload member={member} name={watch('name')} value={photo} onChange={setPhoto} />
         </div>
         <Field label="Full name" required error={errors.name?.message}>
           <Input {...register('name')} autoFocus />

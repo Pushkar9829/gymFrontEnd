@@ -136,5 +136,34 @@ const monday = dayjs().tz(tz).startOf('day').subtract((dayjs().tz(tz).day() + 6)
 const visitDays = [1, 3, 7, 8, 10, 14, 35, 37, 50, 52].map((n) => monday.subtract(n, 'day'));
 await Attendance.insertMany(visitDays.map((d) => ({ memberId: gita._id, branchId: branch._id, day: d.format('YYYY-MM-DD'), checkInAt: d.add(7, 'hour').toDate(), method: 'manual' })));
 await Member.updateOne({ _id: gita._id }, { lastVisitAt: visitDays[0].add(7, 'hour').toDate() });
+// 14-private-files: a member with a private profile photo (full size + 128 px thumbnail). No plan and no trainer,
+// so Arjun Trainer still sees only Rahul.
+const { PrivateFile } = await mod('modules/uploads/privateFile.model.js');
+const { default: zlib } = await import('node:zlib');
+const makePng = (w, h) => {
+  const chunk = (type, data) => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const td = Buffer.concat([Buffer.from(type), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(zlib.crc32(td) >>> 0);
+    return Buffer.concat([len, td, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  const raw = Buffer.alloc((w * 3 + 1) * h);
+  for (let i = 0; i < raw.length; i += 1) raw[i] = i % (w * 3 + 1) === 0 ? 0 : (i * 29) % 256;
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+};
+const pia = await addMember('Pia Private', '9876516001');
+const piaPhoto = makePng(400, 400);
+const piaFile = await PrivateFile.create({
+  memberId: pia._id, branchId: branch._id, kind: 'photo', contentType: 'image/png', size: piaPhoto.length, data: piaPhoto,
+  thumb: makePng(128, 128), thumbType: 'image/png', attached: true, memberVisible: true,
+});
+await Member.updateOne({ _id: pia._id }, { photoFileId: piaFile._id });
 console.log('E2E seed complete');
 await disconnectDb();
