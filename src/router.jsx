@@ -32,6 +32,8 @@ const PortalClasses = lazy(() => import('./pages/portal/PortalClasses'));
 const PortalFeedback = lazy(() => import('./pages/portal/PortalFeedback'));
 const Lockers = lazy(() => import('./pages/Lockers'));
 const Feedback = lazy(() => import('./pages/Feedback'));
+const CashClosing = lazy(() => import('./pages/CashClosing'));
+const Approvals = lazy(() => import('./pages/Approvals'));
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 const PortalHistory = lazy(() => import('./pages/portal/PortalHistory'));
@@ -69,6 +71,8 @@ export const router = createBrowserRouter([
       { path: 'equipment', element: s(<EquipmentPage />) },
       { path: 'lockers', element: s(<Lockers />) },
       { path: 'feedback', element: s(<Feedback />) },
+      { path: 'cash', element: s(<CashClosing />) },
+      { path: 'approvals', element: s(<Approvals />) },
     ],
   },
   { path: '/portal/login', element: s(<PortalLogin />) },

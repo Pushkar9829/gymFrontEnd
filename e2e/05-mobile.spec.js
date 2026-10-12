@@ -3,13 +3,14 @@ import { loginStaff, watchErrors, shot, waitIdle, expectNoHorizontalScroll } fro
 
 const ROUTES = [
   'admin', 'admin/check-in', 'admin/members', 'admin/attendance', 'admin/payments', 'admin/lockers', 'admin/feedback', 'admin/classes', 'admin/pt', 'admin/fitness',
-  'admin/leads', 'admin/messages', 'admin/plans', 'admin/shop', 'admin/expenses', 'admin/payroll', 'admin/reports', 'admin/equipment',
+  'admin/leads', 'admin/messages', 'admin/plans', 'admin/shop', 'admin/cash', 'admin/approvals', 'admin/expenses', 'admin/payroll', 'admin/reports', 'admin/equipment',
   'admin/devices', 'admin/settings',
 ];
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
 test('every staff screen fits a phone (no sideways scrolling)', async ({ page }) => {
+  test.setTimeout(120_000); // 22 screens, each with a screenshot
   const watch = watchErrors(page);
   await loginStaff(page, 'owner');
   const problems = [];

@@ -7,6 +7,7 @@ import { useAuth } from '../../store/auth';
 import { inr, fmtDate, toPaise, toRupees, PAYMENT_MODES } from '../../lib/format';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, Select } from '../../components/ui';
 import { LogSessionModal } from '../PersonalTraining';
+import { DiscountApproval, UsableApprovals, needsApproval } from '../../components/DiscountApproval';
 
 function SellPtModal({ member, onClose }) {
   const { data: pkgs } = useQuery({ queryKey: ['pt', 'packages', 'active'], queryFn: () => get('/pt/packages', { active: true }) });
@@ -15,33 +16,49 @@ function SellPtModal({ member, onClose }) {
   const [f, setF] = useState({ packageId: '', trainerId: member.trainerId?._id || '', discount: '', amount: '', mode: 'upi' });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const pkg = pkgs?.find((p) => p._id === f.packageId);
-  const sell = useAction((b) => post('/pt/purchases', b), { success: 'PT package sold', invalidate: ['pt', 'member', 'payments'], onSuccess: onClose });
+  const [needApproval, setNeedApproval] = useState(false);
+  const [approvalId, setApprovalId] = useState('');
+  const sell = useAction((b) => post('/pt/purchases', b), {
+    success: 'PT package sold',
+    invalidate: ['pt', 'member', 'payments', 'approvals'],
+    onSuccess: onClose,
+    onError: (err) => needsApproval(err) && setNeedApproval(true),
+  });
+  const body = (extra = {}) => ({
+    memberId: member._id,
+    packageId: f.packageId,
+    trainerId: f.trainerId,
+    discount: toPaise(f.discount),
+    payment: Number(f.amount) > 0 ? { amount: toPaise(f.amount), mode: f.mode } : undefined,
+    approvalId: approvalId || undefined,
+    ...extra,
+  });
   return (
     <Modal
       open
       onClose={onClose}
       title="Sell PT package"
       footer={
-        <Button
-          disabled={!f.packageId || !f.trainerId}
-          loading={sell.isPending}
-          onClick={() =>
-            sell.mutate({
-              memberId: member._id,
-              packageId: f.packageId,
-              trainerId: f.trainerId,
-              discount: toPaise(f.discount),
-              payment: Number(f.amount) > 0 ? { amount: toPaise(f.amount), mode: f.mode } : undefined,
-            })
-          }
-        >
+        <Button disabled={!f.packageId || !f.trainerId} loading={sell.isPending} onClick={() => sell.mutate(body())}>
           Sell package
         </Button>
       }
     >
       <div className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <UsableApprovals
+            kind="pt"
+            memberId={member._id}
+            selectedId={approvalId}
+            onUse={(a) => {
+              setF({ ...f, packageId: a.itemKey.split(':')[1], discount: String(toRupees(a.approvedDiscount)) });
+              setApprovalId(a._id);
+              setNeedApproval(false);
+            }}
+          />
+        </div>
         <Field label="Package" className="sm:col-span-2">
-          <Select value={f.packageId} onChange={set('packageId')}>
+          <Select value={f.packageId} onChange={(e) => (set('packageId')(e), setNeedApproval(false))}>
             <option value="">Choose…</option>
             {pkgs?.map((p) => (
               <option key={p._id} value={p._id}>
@@ -63,7 +80,7 @@ function SellPtModal({ member, onClose }) {
           </Select>
         </Field>
         <Field label="Discount (₹)">
-          <Input type="number" min="0" value={f.discount} onChange={set('discount')} />
+          <Input type="number" min="0" value={f.discount} onChange={(e) => (set('discount')(e), setNeedApproval(false))} />
         </Field>
         <div />
         <Field label="Amount received (₹)" hint={pkg ? `Price ${inr(pkg.price)} + GST` : undefined}>
@@ -78,6 +95,15 @@ function SellPtModal({ member, onClose }) {
             ))}
           </Select>
         </Field>
+        {needApproval && f.packageId && (
+          <div className="sm:col-span-2">
+            <DiscountApproval
+              request={{ kind: 'pt', memberId: member._id, packageId: f.packageId, discount: toPaise(f.discount) }}
+              completing={sell.isPending}
+              onComplete={(a) => sell.mutate(body({ discount: a.approvedDiscount, approvalId: a._id }))}
+            />
+          </div>
+        )}
       </div>
     </Modal>
   );

@@ -6,6 +6,7 @@ import { useApi } from '../lib/hooks';
 import { inr, fromNow, fmtTime, ymd } from '../lib/format';
 import { useAuth } from '../store/auth';
 import SetupChecklist from './SetupChecklist';
+import { PendingList } from './Approvals';
 import { Card, PageHeader, PageLoader, StatCard, Button } from '../components/ui';
 
 // A trainer's day: their classes today and PT clients with sessions left.
@@ -126,6 +127,21 @@ export default function Dashboard() {
                   </button>
                 </li>
               )}
+              {data.dayClose && (
+                <li className="flex items-center justify-between">
+                  <span className="text-slate-600">Day closing</span>
+                  <button
+                    className={data.dayClose.closed >= data.dayClose.total ? 'font-semibold text-emerald-700 hover:underline' : 'font-semibold text-amber-600 hover:underline'}
+                    onClick={() => navigate('/admin/cash')}
+                  >
+                    {data.dayClose.total === 1
+                      ? data.dayClose.closed
+                        ? `Closed${data.dayClose.difference < 0 ? ` · short ${inr(-data.dayClose.difference)}` : ''}`
+                        : 'Not closed yet'
+                      : `${data.dayClose.closed} of ${data.dayClose.total} branches closed`}
+                  </button>
+                </li>
+              )}
               {data.lockersOverdue != null && (
                 <li className="flex items-center justify-between">
                   <span className="text-slate-600">Lockers overdue</span>
@@ -165,6 +181,21 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {data.approvals?.pending > 0 && (
+        <Card
+          title={`Discount approvals waiting (${data.approvals.pending})`}
+          className="mt-4"
+          padded={false}
+          actions={
+            <Button size="sm" variant="secondary" onClick={() => navigate('/admin/approvals')}>
+              See all
+            </Button>
+          }
+        >
+          <PendingList items={data.approvals.items} />
+        </Card>
+      )}
 
       <Card title="Recent alerts" className="mt-4" padded={false}>
         {alerts.length ? (

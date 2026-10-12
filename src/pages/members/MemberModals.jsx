@@ -4,6 +4,7 @@ import { get, post } from '../../lib/api';
 import { useAction } from '../../lib/hooks';
 import { inr, toPaise, toRupees, ymd, fmtDate, PAYMENT_MODES } from '../../lib/format';
 import { Button, Field, Input, Modal, Select, Textarea, Toggle } from '../../components/ui';
+import { DiscountApproval, UsableApprovals, needsApproval } from '../../components/DiscountApproval';
 
 const INVALIDATE = ['member', 'members', 'dashboard', 'payments'];
 
@@ -42,6 +43,8 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
   const [famQ, setFamQ] = useState('');
   const { data: famFound } = useQuery({ queryKey: ['family-search', famQ], queryFn: () => get('/members', { search: famQ, limit: 5 }), enabled: famQ.length >= 2 });
   const [pay, setPay] = useState({ amount: '', mode: 'upi', reference: '' });
+  const [needApproval, setNeedApproval] = useState(false);
+  const [approvalId, setApprovalId] = useState('');
 
   const plan = plans?.find((p) => p._id === planId);
   const calc = useMemo(() => {
@@ -56,13 +59,28 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
 
   const save = useAction((body) => post('/subscriptions', body), {
     success: 'Membership added',
-    invalidate: INVALIDATE,
+    invalidate: [...INVALIDATE, 'approvals'],
     onSuccess: () => {
       onClose();
       setPlanId('');
       setDiscount('');
       setPay({ amount: '', mode: 'upi', reference: '' });
+      setNeedApproval(false);
+      setApprovalId('');
     },
+    onError: (err) => needsApproval(err) && setNeedApproval(true),
+  });
+  const body = (extra = {}) => ({
+    memberId: member._id,
+    planId,
+    startDate: startDate || undefined,
+    discount: toPaise(discount),
+    waiveJoiningFee: waive,
+    couponCode: couponCode.trim() || undefined,
+    familyMemberIds: plan?.maxMembers > 1 ? family.map((x) => x._id) : [],
+    payment: Number(pay.amount) > 0 ? { amount: toPaise(pay.amount), mode: pay.mode, reference: pay.reference || undefined } : undefined,
+    approvalId: approvalId || undefined,
+    ...extra,
   });
 
   return (
@@ -76,34 +94,30 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            disabled={!plan}
-            loading={save.isPending}
-            onClick={() =>
-              save.mutate({
-                memberId: member._id,
-                planId,
-                startDate: startDate || undefined,
-                discount: toPaise(discount),
-                waiveJoiningFee: waive,
-                couponCode: couponCode.trim() || undefined,
-                familyMemberIds: plan?.maxMembers > 1 ? family.map((x) => x._id) : [],
-                payment: Number(pay.amount) > 0 ? { amount: toPaise(pay.amount), mode: pay.mode, reference: pay.reference || undefined } : undefined,
-              })
-            }
-          >
+          <Button disabled={!plan} loading={save.isPending} onClick={() => save.mutate(body())}>
             Save membership
           </Button>
         </>
       }
     >
       <div className="space-y-4">
+        <UsableApprovals
+          kind="subscription"
+          memberId={open ? member._id : null}
+          selectedId={approvalId}
+          onUse={(a) => {
+            setPlanId(a.itemKey.split(':')[1]);
+            setDiscount(String(toRupees(a.approvedDiscount)));
+            setApprovalId(a._id);
+            setNeedApproval(false);
+          }}
+        />
         <div className="grid gap-2 sm:grid-cols-2">
           {plans?.map((p) => (
             <button
               key={p._id}
               type="button"
-              onClick={() => setPlanId(p._id)}
+              onClick={() => (setPlanId(p._id), setNeedApproval(false))}
               className={`rounded-xl p-3 text-left ring-1 transition ${planId === p._id ? 'bg-brand-50 ring-2 ring-brand-600' : 'ring-slate-200 hover:ring-brand-300'}`}
             >
               <p className="font-semibold text-slate-900">{p.name}</p>
@@ -121,7 +135,7 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
             <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </Field>
           <Field label="Discount (₹)">
-            <Input type="number" min="0" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+            <Input type="number" min="0" step="0.01" value={discount} onChange={(e) => (setDiscount(e.target.value), setNeedApproval(false))} />
           </Field>
           <Field label="Coupon code" hint="Applied when saving; total on the invoice">
             <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} />
@@ -175,6 +189,13 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
               Received full amount
             </button>
           </div>
+        )}
+        {needApproval && plan && (
+          <DiscountApproval
+            request={{ kind: 'subscription', memberId: member._id, planId, waiveJoiningFee: waive, discount: toPaise(discount) }}
+            completing={save.isPending}
+            onComplete={(a) => save.mutate(body({ discount: a.approvedDiscount, approvalId: a._id }))}
+          />
         )}
         <PaymentFields value={pay} onChange={setPay} />
         <p className="text-xs text-slate-500">Leave the amount empty to record the membership with the full amount as due.</p>

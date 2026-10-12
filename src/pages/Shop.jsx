@@ -9,6 +9,7 @@ import { useAction, useApi, useBranches, useDefaultBranchId } from '../lib/hooks
 import { useAuth } from '../store/auth';
 import { inr, toPaise, toRupees, fmtDateTime, ymd, PAYMENT_MODES } from '../lib/format';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, StatCard, Table, Tabs, Toggle } from '../components/ui';
+import { DiscountApproval, needsApproval } from '../components/DiscountApproval';
 
 const CATEGORIES = ['supplement', 'beverage', 'snack', 'merchandise', 'accessory', 'other'];
 
@@ -45,18 +46,24 @@ function Pos() {
     return { sub, disc, tax: t, total: sub - disc + t };
   }, [cart, discount]);
 
+  const items = cart.map((x) => ({ productId: x._id, qty: x.qty }));
+  // The approval box belongs to the exact cart it was asked for; any change hides it.
+  const approvalKey = JSON.stringify([branchId, member?._id, items, totals.disc]);
+  const [needFor, setNeedFor] = useState(null);
   const checkout = useAction(
-    () => post('/shop/sales', { branchId, memberId: member?._id, items: cart.map((x) => ({ productId: x._id, qty: x.qty })), discount: totals.disc, mode }),
+    (extra = {}) => post('/shop/sales', { branchId, memberId: member?._id, items, discount: totals.disc, mode, ...extra }),
     {
       success: (s) => `Sale ${s.saleNo} done: ${inr(s.total)}`,
-      invalidate: ['shop', 'dashboard'],
+      invalidate: ['shop', 'dashboard', 'approvals'],
       onSuccess: (s) => {
         setLast(s);
         setCart([]);
         setMember(null);
         setMemberQ('');
         setDiscount('');
+        setNeedFor(null);
       },
+      onError: (err) => needsApproval(err) && setNeedFor(approvalKey),
     },
   );
 
@@ -154,6 +161,13 @@ function Pos() {
             <div className="flex justify-between"><dt className="text-slate-500">GST</dt><dd>{inr(totals.tax)}</dd></div>
             <div className="flex justify-between text-base font-semibold"><dt>Total</dt><dd>{inr(totals.total, { decimals: true })}</dd></div>
           </dl>
+          {needFor === approvalKey && cart.length > 0 && (
+            <DiscountApproval
+              request={{ kind: 'shop', branchId, memberId: member?._id, customerName: member ? undefined : 'Walk-in', items, discount: totals.disc }}
+              completing={checkout.isPending}
+              onComplete={(a) => checkout.mutate({ discount: a.approvedDiscount, approvalId: a._id })}
+            />
+          )}
           <Button className="w-full" size="lg" disabled={!cart.length || !branchId} loading={checkout.isPending} onClick={() => checkout.mutate()}>
             Collect {inr(totals.total)}
           </Button>
@@ -172,7 +186,7 @@ function ProductForm({ product, onClose }) {
   const [f, setF] = useState(
     product
       ? { ...product, price: toRupees(product.price), costPrice: toRupees(product.costPrice) }
-      : { name: '', sku: '', category: 'supplement', price: '', costPrice: '', taxPercent: 18, lowStockAt: 5, isActive: true },
+      : { name: '', sku: '', hsn: '', category: 'supplement', price: '', costPrice: '', taxPercent: 18, lowStockAt: 5, isActive: true },
   );
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const save = useAction((b) => (product ? put(`/shop/products/${product._id}`, b) : post('/shop/products', b)), { success: 'Product saved', invalidate: ['shop'], onSuccess: onClose });
@@ -192,6 +206,7 @@ function ProductForm({ product, onClose }) {
               price: toPaise(f.price),
               costPrice: toPaise(f.costPrice),
               taxPercent: Number(f.taxPercent),
+              hsn: (f.hsn || '').trim(),
               lowStockAt: Number(f.lowStockAt),
               isActive: f.isActive,
             })
@@ -223,6 +238,9 @@ function ProductForm({ product, onClose }) {
         </Field>
         <Field label="GST %">
           <Input type="number" min="0" max="50" value={f.taxPercent} onChange={set('taxPercent')} />
+        </Field>
+        <Field label="HSN code" hint="For the GST return (optional, 4-8 digits)">
+          <Input value={f.hsn || ''} onChange={set('hsn')} inputMode="numeric" maxLength={8} />
         </Field>
         <Field label="Low-stock alert at">
           <Input type="number" min="0" value={f.lowStockAt} onChange={set('lowStockAt')} />

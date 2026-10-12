@@ -11,8 +11,8 @@ export function useApi(key, url, params = {}, options = {}) {
   return useQuery({ queryKey: [...[].concat(key), p], queryFn: () => get(url, p), ...options });
 }
 
-/** Mutation that toasts errors / success and invalidates query keys. */
-export function useAction(fn, { success, invalidate = [], onSuccess } = {}) {
+/** Mutation that toasts errors / success and invalidates query keys. onError runs after the error toast. */
+export function useAction(fn, { success, invalidate = [], onSuccess, onError } = {}) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: fn,
@@ -21,7 +21,10 @@ export function useAction(fn, { success, invalidate = [], onSuccess } = {}) {
       await Promise.all(invalidate.map((k) => qc.invalidateQueries({ queryKey: [].concat(k) })));
       onSuccess?.(data, vars);
     },
-    onError: (err) => toast.error(errorMessage(err)),
+    onError: (err, vars) => {
+      toast.error(errorMessage(err));
+      onError?.(err, vars);
+    },
   });
 }
 

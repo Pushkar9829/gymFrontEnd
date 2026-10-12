@@ -86,5 +86,16 @@ await oneOff('Pilates Open', 10, new Date(Date.now() + 2 * 3600000)); // upcomin
 const spin = await oneOff('Spin Duo', 1, new Date(Date.now() + 3 * 3600000)); // full: member joins the waitlist
 await Booking.create({ sessionId: spin._id, memberId: priya._id, branchId: branch._id, status: 'booked', source: 'staff' });
 await ClassSession.updateOne({ _id: spin._id }, { bookedCount: 1 });
+// 10-owner-control: a member for the discount approval flow, one who stopped coming (retention "at risk"),
+// and memberships that ended 1-2 months ago (one renewed, one lost) so the retention report has numbers.
+await addMember('Dev Discount', '9876512001');
+const ravi = await addMember('Ravi Away', '9876512002');
+await createSubscription({ memberId: ravi._id, planId: plans.Quarterly._id, startDate: ymd(addDays(new Date(), -25)), payment: { amount: Math.round(450000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+await Member.updateOne({ _id: ravi._id }, { lastVisitAt: addDays(new Date(), -20) });
+const renewer = await addMember('Old Renewer', '9876512003');
+await createSubscription({ memberId: renewer._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -70)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+await createSubscription({ memberId: renewer._id, planId: plans.Quarterly._id, startDate: ymd(addDays(new Date(), -35)), payment: { amount: Math.round(400000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+const leaver = await addMember('Old Leaver', '9876512004');
+await createSubscription({ memberId: leaver._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -75)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
 console.log('E2E seed complete');
 await disconnectDb();

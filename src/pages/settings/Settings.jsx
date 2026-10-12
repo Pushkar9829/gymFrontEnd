@@ -73,6 +73,19 @@ function GymSettings() {
           <p className="text-xs text-slate-500">Changing entry rules re-checks every member and updates the biometric devices immediately.</p>
         </div>
       </Card>
+      <Card title="Owner controls" className="lg:col-span-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Max discount without approval (%)" hint="For reception. Coupons and company discounts are not limited.">
+            <Input type="number" min="0" max="100" value={f.settings.discountLimitPercent ?? 10} onChange={(e) => setS('discountLimitPercent', e.target.value)} disabled={!editable} />
+          </Field>
+          <Field label="Alert when cash is short by more than (₹)" hint="Checked when the day is closed">
+            <Input type="number" min="0" value={toRupees(f.settings.cashShortAlert ?? 10000)} onChange={(e) => setS('cashShortAlert', toPaise(e.target.value))} disabled={!editable} />
+          </Field>
+          <Field label="Renewal window for retention (days)" hint="Renewing within this many days after the end date counts as retained">
+            <Input type="number" min="0" max="90" value={f.settings.retentionGraceDays ?? 15} onChange={(e) => setS('retentionGraceDays', e.target.value)} disabled={!editable} />
+          </Field>
+        </div>
+      </Card>
       {editable && (
         <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 rounded-xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-200 backdrop-blur lg:col-span-2">
           <span className="text-sm text-slate-500">{dirty ? 'You have unsaved changes' : 'All changes saved'}</span>
@@ -94,6 +107,9 @@ function GymSettings() {
                 channels: { sms: !!f.settings.channels?.sms, whatsapp: !!f.settings.channels?.whatsapp },
                 memberOtpLogin: f.settings.memberOtpLogin !== false,
                 reminderDays: String(f.settings.reminderDays).split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
+                discountLimitPercent: Number(f.settings.discountLimitPercent ?? 10),
+                cashShortAlert: Number(f.settings.cashShortAlert ?? 10000),
+                retentionGraceDays: Number(f.settings.retentionGraceDays ?? 15),
               },
             })
           }

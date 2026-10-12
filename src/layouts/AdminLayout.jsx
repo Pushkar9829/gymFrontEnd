@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useLocation, useNavigate } from 'react-route
 import clsx from 'clsx';
 import {
   LayoutDashboard, Users, ScanLine, CalendarCheck, CreditCard, Tags, UserPlus, Wallet, BarChart3,
-  Fingerprint, Settings, UserCog, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench, KeyRound, MessageSquareWarning,
+  Fingerprint, Settings, UserCog, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench, KeyRound, MessageSquareWarning, HandCoins, BadgeCheck,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useBranches, useApi, useAction } from '../lib/hooks';
@@ -27,7 +27,9 @@ const NAV = [
   { to: '/admin/messages', label: 'Messages', icon: MessageSquare, perm: 'members.write' },
   { to: '/admin/plans', label: 'Plans & coupons', icon: Tags, perm: 'plans.read' },
   { to: '/admin/shop', label: 'Shop', icon: Store, perm: 'shop.sell' },
-  { section: 'Money', to: '/admin/expenses', label: 'Expenses', icon: Wallet, perm: 'expenses.read' },
+  { section: 'Money', to: '/admin/cash', label: 'Day closing', icon: HandCoins, perm: 'cash.close' },
+  { to: '/admin/approvals', label: 'Approvals', icon: BadgeCheck, perm: 'discounts.approve' },
+  { to: '/admin/expenses', label: 'Expenses', icon: Wallet, perm: 'expenses.read' },
   { to: '/admin/payroll', label: 'Payroll', icon: Banknote, perm: 'payroll.manage' },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3, perm: 'reports.read' },
   { section: 'Gym setup', to: '/admin/equipment', label: 'Equipment', icon: Wrench, perm: 'equipment.read' },

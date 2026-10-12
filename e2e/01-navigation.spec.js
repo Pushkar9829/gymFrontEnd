@@ -17,6 +17,8 @@ const SCREENS = [
   { label: 'Messages', heading: 'Messages' },
   { label: 'Plans & coupons', heading: 'Membership plans' },
   { label: 'Shop', heading: 'Shop' },
+  { label: 'Day closing', heading: 'Day closing' },
+  { label: 'Approvals', heading: 'Discount approvals' },
   { label: 'Expenses', heading: 'Expenses' },
   { label: 'Payroll', heading: 'Payroll' },
   { label: 'Reports', heading: 'Reports' },
@@ -30,13 +32,13 @@ const SCREENS = [
 const ROLE_MENU = {
   owner: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
   manager: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
-  receptionist: ['Dashboard', 'Check-in', 'Members', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
+  receptionist: ['Dashboard', 'Check-in', 'Members', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Day closing', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
   trainer: ['Dashboard', 'Members', 'Attendance', 'Classes', 'Personal training', 'Workouts & diet', 'Plans & coupons', 'Equipment', 'My account'],
 };
 
 for (const [role, allowed] of Object.entries(ROLE_MENU)) {
   test(`${role}: menu shows exactly the allowed screens and each one opens cleanly`, async ({ page }) => {
-    test.setTimeout(180_000); // up to 19 screens, each with a screenshot
+    test.setTimeout(210_000); // up to 21 screens, each with a screenshot
     const watch = watchErrors(page);
     await loginStaff(page, role);
     const nav = page.locator('aside nav').first();

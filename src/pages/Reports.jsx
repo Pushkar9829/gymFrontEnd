@@ -7,6 +7,7 @@ import { openFile } from '../lib/api';
 import { useAuth } from '../store/auth';
 import { inr, fmtDate, ymd } from '../lib/format';
 import { Button, Card, EmptyState, Input, PageHeader, StatCard, Table, Tabs } from '../components/ui';
+import { StaffReport, RetentionReport, GstReport } from './ReportsOwner';
 
 const rupees = (v) => Math.round(v / 100);
 const DENY_LABEL = {
@@ -216,7 +217,7 @@ export default function Reports() {
   const [tab, setTab] = useState('finance');
   const [from, setFrom] = useState(ymd(dayjs().startOf('month')));
   const [to, setTo] = useState(ymd());
-  const ranged = ['finance', 'attendance', 'leads', 'branches'].includes(tab);
+  const ranged = ['finance', 'attendance', 'leads', 'branches', 'staff'].includes(tab);
   return (
     <div>
       <PageHeader title="Reports" />
@@ -230,6 +231,9 @@ export default function Reports() {
           { value: 'attendance', label: 'Attendance' },
           { value: 'leads', label: 'Leads' },
           { value: 'branches', label: 'Branches' },
+          { value: 'staff', label: 'Staff performance' },
+          { value: 'retention', label: 'Retention' },
+          { value: 'gst', label: 'GST & Tally' },
         ]}
       />
       {ranged && <Range from={from} to={to} setFrom={setFrom} setTo={setTo} />}
@@ -239,6 +243,9 @@ export default function Reports() {
       {tab === 'attendance' && <AttendanceReport from={from} to={to} />}
       {tab === 'leads' && <LeadsReport from={from} to={to} />}
       {tab === 'branches' && <Branches from={from} to={to} />}
+      {tab === 'staff' && <StaffReport from={from} to={to} />}
+      {tab === 'retention' && <RetentionReport />}
+      {tab === 'gst' && <GstReport />}
     </div>
   );
 }
