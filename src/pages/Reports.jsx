@@ -20,6 +20,10 @@ const DENY_LABEL = {
   DUES: 'Dues pending',
   DEVICE_DENIED: 'Device refused',
   UNKNOWN_USER: 'Unknown finger/ID',
+  OUTSIDE_HOURS: 'Outside plan hours',
+  TRIAL_ENDED: 'Trial ended',
+  TRIAL_NOT_STARTED: 'Trial not started',
+  WAIVER_REQUIRED: 'Waiver not signed',
 };
 
 function Range({ from, to, setFrom, setTo }) {

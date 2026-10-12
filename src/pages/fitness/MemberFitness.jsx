@@ -8,6 +8,7 @@ import { fmtDate, ymd } from '../../lib/format';
 import { Button, Card, EmptyState, Field, Input, Modal, Select, Table } from '../../components/ui';
 import { WorkoutBuilder, DietBuilder } from './Builders';
 import { WorkoutView, DietView, WeightChart } from './PlanViews';
+import ProgressNotes from './ProgressNotes';
 
 function AssignTemplate({ kind, memberId }) {
   const path = kind === 'workout' ? 'workout-plans' : 'diet-plans';
@@ -178,6 +179,7 @@ export default function MemberFitness({ member }) {
           />
         </div>
       </Card>
+      <ProgressNotes member={member} measurements={measurements} />
       {modal?.type === 'workout' && <WorkoutBuilder plan={modal.plan} memberId={member._id} onClose={() => setModal(null)} />}
       {modal?.type === 'diet' && <DietBuilder plan={modal.plan} memberId={member._id} onClose={() => setModal(null)} />}
       {modal?.type === 'measure' && <MeasurementForm memberId={member._id} onClose={() => setModal(null)} />}

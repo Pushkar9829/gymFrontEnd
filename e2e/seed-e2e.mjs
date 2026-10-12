@@ -104,5 +104,18 @@ await Lead.create({ branchId: branch._id, name: 'Tina Trial', phone: '9876513001
 const esha = await addMember('Esha Expired', '9876513002');
 await createSubscription({ memberId: esha._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -38)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
 await User.create({ name: 'Rina Desk', email: 'rina@gym.local', role: 'receptionist', passwordHash: await hashPassword('Staff@12345'), branchIds: [branch._id] });
+// 12-trainer-member-care: a second trainer (no salary, so payroll rows do not change) with one PT client who uses
+// the member app, on a plan with freeze days. Kept apart from Arjun Trainer, who must see only Rahul.
+const tej = await User.create({ name: 'Tej Trainer', email: 'tej@gym.local', role: 'trainer', passwordHash: await hashPassword('Staff@12345'), branchIds: [branch._id], ptCommissionPercent: 20 });
+const kavya = await addMember('Kavya Care', '9876514001', { portalEnabled: true, passwordHash: await hashPassword('Member@123') });
+await createSubscription({ memberId: kavya._id, planId: plans['Half Yearly']._id, startDate: ymd(new Date()), payment: { amount: Math.round(700000 * 1.18), mode: 'upi' }, user: owner });
+// Off sale, so the package list other specs pick from (by position) does not change.
+const pkg10 = await PtPackage.create({ name: '10 sessions', sessions: 10, validityDays: 60, price: 800000, isActive: false });
+await PtPurchase.create({
+  memberId: kavya._id, branchId: branch._id, trainerId: tej._id, packageId: pkg10._id,
+  package: { name: pkg10.name, sessions: 10, validityDays: 60, price: 800000 }, sessionsTotal: 10,
+  validFrom: startOfDay(), validTo: addDays(startOfDay(), 59), price: 800000, taxPercent: 18, taxAmount: 144000,
+  totalAmount: 944000, paidAmount: 944000, dueAmount: 0,
+});
 console.log('E2E seed complete');
 await disconnectDb();

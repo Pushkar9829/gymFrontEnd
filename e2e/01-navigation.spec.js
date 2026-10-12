@@ -20,7 +20,7 @@ const SCREENS = [
   { label: 'Plans & coupons', heading: 'Membership plans' },
   { label: 'Shop', heading: 'Shop' },
   { label: 'Day closing', heading: 'Day closing' },
-  { label: 'Approvals', heading: 'Discount approvals' },
+  { label: 'Approvals', heading: 'Approvals' },
   { label: 'Expenses', heading: 'Expenses' },
   { label: 'Payroll', heading: 'Payroll' },
   { label: 'Reports', heading: 'Reports' },
@@ -34,7 +34,8 @@ const SCREENS = [
 const ROLE_MENU = {
   owner: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
   manager: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
-  receptionist: ['Dashboard', 'Check-in', 'Shift handover', 'Members', 'Trials', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Day closing', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
+  // Reception sees Approvals for freeze requests from the member app (discount approvals stay owner / manager).
+  receptionist: ['Dashboard', 'Check-in', 'Shift handover', 'Members', 'Trials', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Day closing', 'Approvals', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
   trainer: ['Dashboard', 'Shift handover', 'Members', 'Attendance', 'Classes', 'Personal training', 'Workouts & diet', 'Plans & coupons', 'Equipment', 'My account'],
 };
 

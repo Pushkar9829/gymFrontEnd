@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Dumbbell, IndianRupee, FileText, Plus } from 'lucide-react';
+import { Dumbbell, IndianRupee, FileText, Plus, CalendarPlus } from 'lucide-react';
 import { get, post, openFile } from '../../lib/api';
 import { useAction } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
-import { inr, fmtDate, toPaise, toRupees, PAYMENT_MODES } from '../../lib/format';
+import { inr, fmtDate, fmtDateTime, toPaise, toRupees, ymd, PAYMENT_MODES } from '../../lib/format';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, Select } from '../../components/ui';
 import { LogSessionModal } from '../PersonalTraining';
+import { BookSlotModal } from '../pt/PtSchedule';
+import { BookingBadge } from '../../components/SlotPicker';
 import { DiscountApproval, UsableApprovals, needsApproval } from '../../components/DiscountApproval';
 
 function SellPtModal({ member, onClose }) {
@@ -137,6 +139,10 @@ export default function MemberPt({ member }) {
   const can = useAuth((s) => s.can);
   const [modal, setModal] = useState(null);
   const { data } = useQuery({ queryKey: ['pt', 'member', member._id], queryFn: () => get('/pt/purchases', { memberId: member._id, limit: 50 }) });
+  const { data: bookings } = useQuery({
+    queryKey: ['pt', 'bookings', 'member', member._id],
+    queryFn: () => get('/pt/bookings', { memberId: member._id, from: ymd(), to: ymd(new Date(Date.now() + 30 * 86400000)), status: 'open' }),
+  });
   const items = data?.items || [];
   return (
     <Card
@@ -182,6 +188,11 @@ export default function MemberPt({ member }) {
                       Log session
                     </Button>
                   )}
+                  {active && can('pt.log') && (
+                    <Button size="sm" variant="secondary" onClick={() => setModal({ type: 'book', p })}>
+                      <CalendarPlus className="size-3.5" /> Book slot
+                    </Button>
+                  )}
                   {p.dueAmount > 0 && p.status === 'active' && can('payments.create') && (
                     <Button size="sm" variant="secondary" onClick={() => setModal({ type: 'pay', p })}>
                       <IndianRupee className="size-3.5" /> Collect due
@@ -198,9 +209,22 @@ export default function MemberPt({ member }) {
           })}
         </ul>
       )}
+      {bookings?.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-semibold text-slate-800">Upcoming PT bookings</p>
+          <ul className="space-y-1.5 text-sm">
+            {bookings.map((b) => (
+              <li key={b._id} className="flex flex-wrap items-center gap-2">
+                <span>{fmtDateTime(b.startsAt)}</span> <span className="text-slate-500">with {b.trainerId?.name}</span> <BookingBadge status={b.status} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {modal?.type === 'sell' && <SellPtModal member={member} onClose={() => setModal(null)} />}
       {modal?.type === 'pay' && <PayPtModal purchase={modal.p} onClose={() => setModal(null)} />}
       {modal?.type === 'log' && <LogSessionModal purchase={modal.p} onClose={() => setModal(null)} />}
+      {modal?.type === 'book' && <BookSlotModal member={member} purchase={modal.p} onClose={() => setModal(null)} />}
     </Card>
   );
 }

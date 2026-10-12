@@ -6,6 +6,7 @@ import { useAction, useBranches } from '../../lib/hooks';
 import { useAuth } from '../../store/auth';
 import { fmtDateTime, inr, toPaise, toRupees } from '../../lib/format';
 import { MyPayslips } from '../Payroll';
+import WaiverSettings from './WaiverSettings';
 import { Badge, Button, Card, Field, Input, Modal, PageHeader, PageLoader, Select, Table, Tabs, Textarea, Toggle } from '../../components/ui';
 
 function GymSettings() {
@@ -21,6 +22,8 @@ function GymSettings() {
   const setS = (k, v) => setF({ ...f, settings: { ...f.settings, [k]: v } });
   const trial = f.settings.trial || {};
   const setTrial = (k, v) => setS('trial', { ...trial, [k]: v });
+  const pt = f.settings.pt || {};
+  const setPt = (k, v) => setS('pt', { ...pt, [k]: v });
   const editable = can('settings.write');
   const dirty = JSON.stringify(f) !== JSON.stringify({ ...data, settings: { ...data.settings, reminderDays: (data.settings?.reminderDays || []).join(', ') } });
 
@@ -121,6 +124,32 @@ function GymSettings() {
             <Field label="One trial per phone every (days)" hint="Owner / manager can override">
               <Input type="number" min="0" max="365" value={trial.repeatDays ?? 90} onChange={(e) => setTrial('repeatDays', e.target.value)} disabled={!editable} />
             </Field>
+            <div className="sm:col-span-3">
+              <Toggle checked={trial.allowClassBooking !== false} onChange={(v) => setTrial('allowClassBooking', v)} disabled={!editable} label="Trial visitors can book classes" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">Personal training booking</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Members book up to (days ahead)">
+              <Input type="number" min="1" max="60" value={pt.bookingWindowDays ?? 14} onChange={(e) => setPt('bookingWindowDays', e.target.value)} disabled={!editable} />
+            </Field>
+            <Field label="Members cancel up to (hours before)" hint="Later, only staff can cancel (marked late)">
+              <Input type="number" min="0" max="72" value={pt.cancelHours ?? 4} onChange={(e) => setPt('cancelHours', e.target.value)} disabled={!editable} />
+            </Field>
+            <Field label="Bookings per member per day">
+              <Select value={pt.maxPerDay ?? 1} onChange={(e) => setPt('maxPerDay', Number(e.target.value))} disabled={!editable}>
+                {[1, 2, 3].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <div className="sm:col-span-3">
+              <Toggle checked={pt.noShowUsesSession !== false} onChange={(v) => setPt('noShowUsesSession', v)} disabled={!editable} label="A no-show uses one session" />
+            </div>
           </div>
         </div>
       </Card>
@@ -154,6 +183,13 @@ function GymSettings() {
                   defaultDays: Math.min(Number(trial.defaultDays ?? 1), Number(trial.maxDays ?? 3)),
                   maxDays: Number(trial.maxDays ?? 3),
                   repeatDays: Number(trial.repeatDays ?? 90),
+                  allowClassBooking: trial.allowClassBooking !== false,
+                },
+                pt: {
+                  bookingWindowDays: Number(pt.bookingWindowDays ?? 14),
+                  cancelHours: Number(pt.cancelHours ?? 4),
+                  maxPerDay: Number(pt.maxPerDay ?? 1),
+                  noShowUsesSession: pt.noShowUsesSession !== false,
                 },
               },
             })
@@ -453,6 +489,7 @@ export default function Settings() {
         tabs={[
           { value: 'gym', label: 'Gym & entry rules' },
           { value: 'branches', label: 'Branches' },
+          { value: 'waiver', label: 'Waiver' },
           ...(can('users.read') ? [{ value: 'staff', label: 'Staff' }] : []),
           ...(can('audit.read') ? [{ value: 'audit', label: 'Audit log' }] : []),
           { value: 'me', label: 'My account' },
@@ -460,6 +497,7 @@ export default function Settings() {
       />
       {tab === 'gym' && <GymSettings />}
       {tab === 'branches' && <Branches />}
+      {tab === 'waiver' && <WaiverSettings />}
       {tab === 'staff' && <Staff />}
       {tab === 'audit' && <AuditLog />}
       {tab === 'me' && (

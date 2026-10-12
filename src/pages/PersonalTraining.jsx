@@ -8,6 +8,7 @@ import { useApi, useAction } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, fmtDate, fmtDateTime, toPaise, toRupees, ymd, daysUntil } from '../lib/format';
 import { Avatar, Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Spinner, StatCard, Table, Tabs, Textarea, Toggle } from '../components/ui';
+import { PtSchedule, PtAvailability, BookSlotModal } from './pt/PtSchedule';
 
 export function LogSessionModal({ purchase, onClose }) {
   const [status, setStatus] = useState('done');
@@ -51,6 +52,7 @@ export function LogSessionModal({ purchase, onClose }) {
 function ActivePackages() {
   const [page, setPage] = useState(1);
   const [logFor, setLogFor] = useState(null);
+  const [bookFor, setBookFor] = useState(null);
   const navigate = useNavigate();
   const can = useAuth((s) => s.can);
   const { data, isLoading } = useApi(['pt', 'purchases'], '/pt/purchases', { state: 'active', page });
@@ -88,11 +90,26 @@ function ActivePackages() {
           },
           { key: 'valid', label: 'Valid till', render: (p) => <span className={daysUntil(p.validTo) <= 7 ? 'text-amber-600' : ''}>{fmtDate(p.validTo)}</span> },
           { key: 'due', label: 'Due', render: (p) => (p.dueAmount ? <span className="text-rose-600">{inr(p.dueAmount)}</span> : '—') },
-          { key: 'a', label: '', render: (p) => can('pt.log') && <Button size="sm" onClick={() => setLogFor(p)}>Log session</Button> },
+          {
+            key: 'a',
+            label: '',
+            render: (p) =>
+              can('pt.log') && (
+                <span className="flex gap-1">
+                  <Button size="sm" variant="secondary" onClick={() => setBookFor(p)}>
+                    Book slot
+                  </Button>
+                  <Button size="sm" onClick={() => setLogFor(p)}>
+                    Log session
+                  </Button>
+                </span>
+              ),
+          },
         ]}
       />
       <Pagination page={data?.page} pages={data?.pages} total={data?.total} onChange={setPage} />
       {logFor && <LogSessionModal purchase={logFor} onClose={() => setLogFor(null)} />}
+      {bookFor && <BookSlotModal member={bookFor.memberId} purchase={bookFor} onClose={() => setBookFor(null)} />}
     </Card>
   );
 }
@@ -258,18 +275,22 @@ export default function PersonalTraining() {
   const [tab, setTab] = useState('active');
   return (
     <div>
-      <PageHeader title="Personal training" subtitle="Sell PT packages from a member's page. Trainers log each session here." />
+      <PageHeader title="Personal training" subtitle="Sell PT packages from a member's page. Members book slots in the app; trainers mark each session done." />
       <Tabs
         value={tab}
         onChange={setTab}
         tabs={[
           { value: 'active', label: 'Active packages' },
+          { value: 'schedule', label: 'PT schedule' },
+          { value: 'availability', label: 'Availability' },
           { value: 'sessions', label: 'Session log' },
           { value: 'commission', label: 'Trainer commission' },
           { value: 'packages', label: 'Packages' },
         ]}
       />
       {tab === 'active' && <ActivePackages />}
+      {tab === 'schedule' && <PtSchedule />}
+      {tab === 'availability' && <PtAvailability />}
       {tab === 'sessions' && <Sessions />}
       {tab === 'commission' && <Commission />}
       {tab === 'packages' && <Packages />}

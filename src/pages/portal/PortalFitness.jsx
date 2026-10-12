@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { memberApi, errorMessage } from '../../lib/api';
-import { ymd } from '../../lib/format';
-import { Button, Card, EmptyState, Input, PageLoader, Tabs } from '../../components/ui';
+import { fmtDate, ymd } from '../../lib/format';
+import { Button, Card, EmptyState, Input, Modal, PageLoader, Tabs } from '../../components/ui';
+import { PrivateImage } from '../../components/PrivateImage';
 import { WorkoutView, DietView, WeightChart } from '../fitness/PlanViews';
 import { portalGet } from './PortalHome';
 
@@ -13,6 +14,8 @@ export default function PortalFitness() {
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ['portal', 'fitness'], queryFn: () => portalGet('/me/fitness') });
+  const { data: notes } = useQuery({ queryKey: ['portal', 'progress'], queryFn: () => portalGet('/me/progress'), enabled: tab === 'progress' });
+  const [photo, setPhoto] = useState(null);
   if (isLoading) return <PageLoader />;
 
   async function logWeight() {
@@ -56,6 +59,35 @@ export default function PortalFitness() {
           <Card title="Progress">
             <WeightChart measurements={data.measurements} />
           </Card>
+          <Card title="Notes from your trainer" padded={false}>
+            {!notes?.length ? (
+              <p className="px-4 py-6 text-center text-sm text-slate-500">No notes yet. Your trainer adds progress notes and photos here.</p>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {notes.map((n) => (
+                  <li key={n._id} className="px-4 py-3">
+                    <p className="text-xs text-slate-500">
+                      {fmtDate(n.createdAt)} · {n.createdBy?.name}
+                      {n.measurementId?.weightKg ? ` · ${n.measurementId.weightKg} kg` : ''}
+                    </p>
+                    <p className="mt-1 text-sm whitespace-pre-line text-slate-800">{n.text}</p>
+                    {n.photoIds?.length > 0 && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {n.photoIds.map((id) => (
+                          <PrivateImage key={id} url={`/me/files/${id}`} client={memberApi.client} alt="Progress photo" className="aspect-square w-full rounded-lg" onClick={() => setPhoto(id)} />
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          {photo && (
+            <Modal open onClose={() => setPhoto(null)} title="Progress photo">
+              <PrivateImage url={`/me/files/${photo}`} client={memberApi.client} alt="Progress photo" className="w-full rounded-lg object-contain" />
+            </Modal>
+          )}
         </div>
       )}
     </div>

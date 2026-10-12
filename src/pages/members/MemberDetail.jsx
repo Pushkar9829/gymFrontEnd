@@ -20,6 +20,7 @@ import MemberLocker from './MemberLocker';
 import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
 import { TrialActions, TrialBadge } from '../Trials';
+import { useMemberWaiver, WaiverBadge, WaiverActions } from './MemberWaiver';
 
 function trialState(member) {
   const t = member.trial || {};
@@ -246,6 +247,7 @@ export default function MemberDetail() {
   const { data, isLoading, refetch } = useQuery({ queryKey: ['member', id], queryFn: () => get(`/members/${id}`) });
   const { data: timeline } = useQuery({ queryKey: ['member', id, 'timeline'], queryFn: () => get(`/members/${id}/timeline`) });
   const { data: card } = useQuery({ queryKey: ['member', id, 'card'], queryFn: () => get(`/members/${id}/card`), enabled: modal?.type === 'card' });
+  const { data: waiver } = useMemberWaiver(id);
 
   const close = () => setModal(null);
   const blockAction = useAction((reason) => post(`/members/${id}/block`, { reason }), { success: 'Member blocked. Device access removed.', invalidate: ['member', 'members'], onSuccess: close });
@@ -296,10 +298,11 @@ export default function MemberDetail() {
                 {member.trainerId && ` · Trainer: ${member.trainerId.name}`}
                 {member.companyId && ` · ${member.companyId.name}`}
               </p>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {member.isTrial ? <Badge status="trial">Trial visitor</Badge> : <Badge status={member.membershipStatus} />}
                 {member.currentPlanName && <span className="text-sm text-slate-600">{member.currentPlanName}</span>}
                 {member.membershipEnd && <span className="text-sm text-slate-500">till {fmtDate(member.membershipEnd)}</span>}
+                <WaiverBadge waiver={waiver} />
               </div>
             </div>
           </div>
@@ -317,6 +320,7 @@ export default function MemberDetail() {
             <Button variant="secondary" onClick={() => setModal({ type: 'card' })}>
               <QrCode className="size-4" /> QR card
             </Button>
+            <WaiverActions member={member} waiver={waiver} />
             {can('members.write') && !member.isTrial && (
               <Button variant="secondary" onClick={() => setModal({ type: 'portal' })}>
                 <Smartphone className="size-4" /> App access {member.portalEnabled ? '(on)' : ''}

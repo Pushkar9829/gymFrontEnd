@@ -30,7 +30,8 @@ const NAV = [
   { to: '/admin/plans', label: 'Plans & coupons', icon: Tags, perm: 'plans.read' },
   { to: '/admin/shop', label: 'Shop', icon: Store, perm: 'shop.sell' },
   { section: 'Money', to: '/admin/cash', label: 'Day closing', icon: HandCoins, perm: 'cash.close' },
-  { to: '/admin/approvals', label: 'Approvals', icon: BadgeCheck, perm: 'discounts.approve' },
+  // Discount approvals (owner / manager) and freeze requests from the app (whoever can freeze: reception too).
+  { to: '/admin/approvals', label: 'Approvals', icon: BadgeCheck, perm: ['discounts.approve', 'subscriptions.write'] },
   { to: '/admin/expenses', label: 'Expenses', icon: Wallet, perm: 'expenses.read' },
   { to: '/admin/payroll', label: 'Payroll', icon: Banknote, perm: 'payroll.manage' },
   { to: '/admin/reports', label: 'Reports', icon: BarChart3, perm: 'reports.read' },
@@ -44,7 +45,8 @@ NAV.reduce((sec, n) => (n.section ||= sec), null);
 
 function Sidebar({ onNavigate }) {
   const can = useAuth((s) => s.can);
-  const items = NAV.flatMap((n) => (can(n.perm) ? [n] : n.otherwise ? [{ ...n, ...n.otherwise }] : []));
+  // perm may be a list: any one of them is enough.
+  const items = NAV.flatMap((n) => ([].concat(n.perm).some(can) ? [n] : n.otherwise ? [{ ...n, ...n.otherwise }] : []));
   // Headings only help on a long menu (owner/manager), not a trainer's few items.
   const grouped = items.length > 6;
   return (

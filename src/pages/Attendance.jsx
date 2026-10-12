@@ -19,7 +19,7 @@ function Live() {
         onRowClick={(r) => navigate(`/admin/members/${r.memberId?._id}`)}
         empty={<EmptyState icon={Users} title="Nobody checked in right now" />}
         columns={[
-          { key: 'm', label: 'Member', render: (r) => <MemberCell m={r.memberId} /> },
+          { key: 'm', label: 'Member', render: (r) => <MemberCell m={r.memberId} trial={r.isTrial} /> },
           { key: 'in', label: 'Checked in', render: (r) => fmtTime(r.checkInAt) },
           { key: 'method', label: 'Via', render: (r) => r.method },
           { key: 'plan', label: 'Plan', render: (r) => r.memberId?.currentPlanName || '—' },
@@ -29,12 +29,14 @@ function Live() {
   );
 }
 
-const MemberCell = ({ m }) =>
+const MemberCell = ({ m, trial }) =>
   m ? (
     <div className="flex items-center gap-2">
       <Avatar name={m.name} src={m.photoUrl} size="sm" />
       <div>
-        <p className="font-medium text-slate-900">{m.name}</p>
+        <p className="font-medium text-slate-900">
+          {m.name} {trial && <Badge status="trial">Trial</Badge>}
+        </p>
         <p className="text-xs text-slate-500">#{m.memberCode}</p>
       </div>
     </div>
@@ -67,7 +69,7 @@ function Visits() {
             rows={data?.items}
             empty={<EmptyState title="No visits on this day" />}
             columns={[
-              { key: 'm', label: 'Member', render: (r) => <MemberCell m={r.memberId} /> },
+              { key: 'm', label: 'Member', render: (r) => <MemberCell m={r.memberId} trial={r.isTrial} /> },
               { key: 'in', label: 'In', render: (r) => fmtTime(r.checkInAt) },
               { key: 'out', label: 'Out', render: (r) => fmtTime(r.checkOutAt) },
               { key: 'method', label: 'Via', render: (r) => r.deviceId?.name || r.method },

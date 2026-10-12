@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginStaff, watchErrors, shot, waitIdle, expectNoHorizontalScroll } from './helpers.js';
+import { loginStaff, loginMember, watchErrors, shot, waitIdle, expectNoHorizontalScroll } from './helpers.js';
 
 const ROUTES = [
   'admin', 'admin/check-in', 'admin/handover', 'admin/members', 'admin/trials', 'admin/attendance', 'admin/payments', 'admin/lockers', 'admin/feedback', 'admin/classes', 'admin/pt', 'admin/fitness',
@@ -28,6 +28,22 @@ test('every staff screen fits a phone (no sideways scrolling)', async ({ page })
   await waitIdle(page);
   await shot(page, 'mobile-member-detail');
   await expectNoHorizontalScroll(page);
+  expect(problems, problems.join('\n')).toEqual([]);
+  watch.assertClean();
+});
+
+test('member app pages fit a phone (no sideways scrolling)', async ({ page }) => {
+  test.setTimeout(90_000);
+  const watch = watchErrors(page);
+  await loginMember(page);
+  const problems = [];
+  for (const r of ['portal', 'portal/fitness', 'portal/classes', 'portal/history', 'portal/feedback', 'portal/pt', 'portal/freeze', 'portal/waiver']) {
+    await page.goto(`/${r}`);
+    await waitIdle(page);
+    const { scroll, width } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: window.innerWidth }));
+    if (scroll > width + 1) problems.push(`${r}: ${scroll}px wide`);
+    await shot(page, `mobile-${r.replace(/\W+/g, '-')}`);
+  }
   expect(problems, problems.join('\n')).toEqual([]);
   watch.assertClean();
 });

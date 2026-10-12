@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { openCheckout } from '../../lib/razorpay';
 import { errorMessage } from '../../lib/api';
 import clsx from 'clsx';
-import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight } from 'lucide-react';
+import { ShieldCheck, ShieldX, FileText, Phone, MapPin, Clock, KeyRound, MessageSquareText, ChevronRight, CalendarPlus, Snowflake, FileSignature } from 'lucide-react';
 import { memberApi, openFile } from '../../lib/api';
-import { inr, fmtDate } from '../../lib/format';
+import { inr, fmtDate, fmtTime } from '../../lib/format';
 import { Avatar, Badge, Button, Card, PageLoader } from '../../components/ui';
 
 export const portalGet = (url, params) => memberApi.client.get(url, { params }).then((r) => r.data.data);
@@ -18,6 +18,25 @@ export default function PortalHome() {
   const { data: pt } = useQuery({ queryKey: ['portal', 'pt'], queryFn: () => portalGet('/me/pt') });
   const { data: autopay } = useQuery({ queryKey: ['portal', 'autopay'], queryFn: () => portalGet('/me/autopay') });
   const { data: locker } = useQuery({ queryKey: ['portal', 'locker'], queryFn: () => portalGet('/me/locker') });
+  const { data: waiver } = useQuery({ queryKey: ['portal', 'waiver'], queryFn: () => portalGet('/me/waiver') });
+  const { data: freeze } = useQuery({ queryKey: ['portal', 'freeze'], queryFn: () => portalGet('/me/freeze') });
+  const { data: ptBooking } = useQuery({ queryKey: ['portal', 'pt-booking'], queryFn: () => portalGet('/me/pt-booking') });
+  const navigate = useNavigate();
+  const signNow = Boolean(waiver?.pending && waiver?.ask);
+  // First visit in this session: open the waiver straight away while it is unsigned ("Later" comes back here).
+  useEffect(() => {
+    if (!signNow) return;
+    try {
+      if (sessionStorage.getItem('gym.waiverPrompted')) return;
+      sessionStorage.setItem('gym.waiverPrompted', '1');
+    } catch {
+      return;
+    }
+    navigate('/portal/waiver');
+  }, [signNow, navigate]);
+  const nextPt = (ptBooking?.bookings || []).filter((b) => b.status === 'booked' && new Date(b.startsAt) > new Date()).sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))[0];
+  const lastFreeze = freeze?.requests?.[0];
+  const freezeNote = lastFreeze && (lastFreeze.status === 'pending' || Date.now() - new Date(lastFreeze.updatedAt) < 14 * 86400000) ? lastFreeze : null;
   const autopayOn = autopay && ['created', 'authenticated', 'active', 'pending', 'halted', 'paused'].includes(autopay.status);
   const activePt = (pt?.purchases || []).filter((p) => p.status === 'active' && p.sessionsUsed < p.sessionsTotal && new Date(p.validTo) >= new Date(new Date().toDateString()));
   const qc = useQueryClient();
@@ -49,6 +68,19 @@ export default function PortalHome() {
           <p className="text-lg font-semibold">Hi, {member.name.split(' ')[0]}</p>
         </div>
       </div>
+
+      {signNow && (
+        <Link to="/portal/waiver" className="flex items-center gap-3 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
+          <span className="rounded-lg bg-amber-100 p-2 text-amber-800">
+            <FileSignature className="size-5" />
+          </span>
+          <span className="flex-1 text-sm">
+            <b className="block text-amber-900">Please sign the gym waiver</b>
+            <span className="text-xs text-amber-800">{waiver.requiredForEntry ? 'Needed before you can enter the gym' : 'Takes one minute'}</span>
+          </span>
+          <ChevronRight className="size-5 text-amber-700" />
+        </Link>
+      )}
 
       <div className={clsx('rounded-2xl p-4 text-white shadow-md', ok ? 'bg-gradient-to-br from-brand-700 to-brand-900' : 'bg-gradient-to-br from-rose-600 to-rose-800')}>
         <div className="flex items-center gap-2">
@@ -103,6 +135,14 @@ export default function PortalHome() {
               </li>
             ))}
           </ul>
+          {nextPt && (
+            <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-900">
+              Next session: <b>{fmtDate(nextPt.startsAt)}, {fmtTime(nextPt.startsAt)}</b> with {nextPt.trainerId?.name}
+            </p>
+          )}
+          <Link to="/portal/pt" className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white">
+            <CalendarPlus className="size-4" /> Book PT session
+          </Link>
         </Card>
       )}
 
@@ -118,6 +158,36 @@ export default function PortalHome() {
             </p>
           </div>
         </Card>
+      )}
+
+      {freeze?.subscription && (
+        <Link to="/portal/freeze" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <span className="rounded-lg bg-indigo-50 p-2 text-indigo-700">
+            <Snowflake className="size-5" />
+          </span>
+          <span className="flex-1 text-sm">
+            <b className="block">Need a break? Request a freeze</b>
+            <span className="text-xs text-slate-500">
+              {freezeNote
+                ? `Freeze request ${{ pending: 'waiting for the gym', approved: 'approved', rejected: 'not approved', cancelled: 'cancelled' }[freezeNote.status]}`
+                : `${freeze.allowance?.daysLeft ?? 0} freeze day(s) left on your plan`}
+            </span>
+          </span>
+          <ChevronRight className="size-5 text-slate-400" />
+        </Link>
+      )}
+
+      {waiver?.signed && !signNow && (
+        <Link to="/portal/waiver" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <span className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+            <FileSignature className="size-5" />
+          </span>
+          <span className="flex-1 text-sm">
+            <b className="block">Waiver signed</b>
+            <span className="text-xs text-slate-500">Version {waiver.signed.version} on {fmtDate(waiver.signed.signedAt)}</span>
+          </span>
+          <ChevronRight className="size-5 text-slate-400" />
+        </Link>
       )}
 
       <Link to="/portal/feedback" className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">

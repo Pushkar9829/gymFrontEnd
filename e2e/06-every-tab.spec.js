@@ -6,16 +6,16 @@ const STAFF_TABS = [
   { url: '/admin/attendance', tabs: ['In gym now', 'Visits', 'Entry log', 'Staff'] },
   { url: '/admin/classes', tabs: ['Timetable', 'Weekly schedule', 'Class types'] },
   { url: '/admin/leads', tabs: ['All', 'New', 'Contacted', 'Trial', 'Follow-ups due', 'Converted', 'Lost'] },
-  { url: '/admin/pt', tabs: ['Active packages', 'Packages', 'Session log', 'Trainer commission'] },
+  { url: '/admin/pt', tabs: ['Active packages', 'PT schedule', 'Availability', 'Packages', 'Session log', 'Trainer commission'] },
   { url: '/admin/fitness', tabs: ['Exercise library', 'Workout templates', 'Diet templates'] },
   { url: '/admin/shop', tabs: ['New sale', 'Products & stock', 'Sales'] },
   { url: '/admin/reports', tabs: ['Income & P&L', 'Dues', 'Expiring / expired', 'Attendance', 'Leads', 'Branches', 'Staff performance', 'Retention', 'GST & Tally'] },
   { url: '/admin/cash', tabs: ['Close day', 'History'] },
-  { url: '/admin/approvals', tabs: ['Waiting', 'Approved', 'Used', 'Rejected', 'Expired', 'All'] },
+  { url: '/admin/approvals', tabs: ['Waiting', 'Approved', 'Used', 'Rejected', 'Expired', 'All', 'Freeze requests', 'Waiting', 'Approved', 'Rejected', 'All', 'Discounts'] },
   { url: '/admin/feedback', tabs: ['Open', 'In progress', 'Resolved', 'Closed', 'All'] },
   { url: '/admin/trials', tabs: ['Active', 'Upcoming', 'Ended', 'Joined', 'All'] },
   { url: '/admin/handover', tabs: ['Open tasks', 'Done', 'Notes', 'All'] },
-  { url: '/admin/settings', tabs: ['Gym & entry rules', 'Branches', 'Staff', 'Audit log', 'My account'] },
+  { url: '/admin/settings', tabs: ['Gym & entry rules', 'Branches', 'Waiver', 'Staff', 'Audit log', 'My account'] },
 ];
 
 const MEMBER_TABS = ['Memberships', 'Personal training', 'Fitness', 'Payments', 'Attendance & entry log', 'Biometric'];
@@ -67,6 +67,14 @@ test('member app: every tab and the renew page open cleanly', async ({ browser }
   await waitIdle(page);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await shot(page, 'tab-portal-renew');
+  // Pages opened from Home cards: PT booking, freeze request, waiver
+  for (const [url, heading] of [['/portal/pt', 'Personal training'], ['/portal/freeze', 'Freeze membership'], ['/portal/waiver', 'Gym waiver']]) {
+    await page.goto(url);
+    await waitIdle(page);
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    await expect(page.getByText('Something went wrong')).toHaveCount(0);
+    await shot(page, `tab-portal-${url.split('/').pop()}`);
+  }
   watch.assertClean();
   await page.close();
 });

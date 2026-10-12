@@ -142,6 +142,7 @@ test.describe.serial('reception desk', () => {
     await selectField(dlg, 'Assign to').selectOption({ label: 'Rina Desk (receptionist)' });
     await dlg.getByRole('button', { name: 'Post', exact: true }).click();
     await toast(page, 'Task posted');
+    await expect(dlg).toHaveCount(0); // the closing dialog sits inside the card for a moment
     await expect(card.getByText('Call Mr Shah about his renewal')).toBeVisible();
 
     rina = await newStaffPage(browser, { email: 'rina@gym.local', password: 'Staff@12345' });
