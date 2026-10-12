@@ -97,5 +97,12 @@ await createSubscription({ memberId: renewer._id, planId: plans.Monthly._id, sta
 await createSubscription({ memberId: renewer._id, planId: plans.Quarterly._id, startDate: ymd(addDays(new Date(), -35)), payment: { amount: Math.round(400000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
 const leaver = await addMember('Old Leaver', '9876512004');
 await createSubscription({ memberId: leaver._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -75)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+// 11-reception: a lead to give a trial pass, a member whose membership ran out last week, and a second
+// receptionist (no salary, so payroll rows do not change) to hand a task over to.
+const { Lead } = await mod('modules/leads/lead.model.js');
+await Lead.create({ branchId: branch._id, name: 'Tina Trial', phone: '9876513001', source: 'instagram', status: 'new', assignedTo: owner._id });
+const esha = await addMember('Esha Expired', '9876513002');
+await createSubscription({ memberId: esha._id, planId: plans.Monthly._id, startDate: ymd(addDays(new Date(), -38)), payment: { amount: Math.round(200000 * 1.18), mode: 'upi' }, user: owner, allowBackdate: true });
+await User.create({ name: 'Rina Desk', email: 'rina@gym.local', role: 'receptionist', passwordHash: await hashPassword('Staff@12345'), branchIds: [branch._id] });
 console.log('E2E seed complete');
 await disconnectDb();

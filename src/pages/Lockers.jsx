@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import clsx from 'clsx';
-import { Plus, KeyRound, Wrench, Lock, AlarmClock } from 'lucide-react';
-import { post, put } from '../lib/api';
+import { Plus, KeyRound, Wrench, Lock, AlarmClock, Printer } from 'lucide-react';
+import { toast } from 'sonner';
+import { post, put, openFile } from '../lib/api';
 import { useApi, useAction, useBranches } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { inr, fmtDate, toPaise, toRupees, daysUntil } from '../lib/format';
@@ -10,6 +11,11 @@ import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, PageLoader, 
 import MemberPicker from '../components/MemberPicker';
 
 const MODES = ['cash', 'upi', 'card', 'bank'];
+
+const printReceipt = (allotmentId, no) => openFile(`/lockers/allotments/${allotmentId}/receipt.pdf${no ? `?no=${encodeURIComponent(no)}` : ''}`);
+// Success toast with a "Print receipt" button when money was taken.
+const toastWithPrint = (message, allotmentId, no) =>
+  no ? toast.success(message, { action: { label: 'Print receipt', onClick: () => printReceipt(allotmentId, no) }, duration: 10000 }) : toast.success(message);
 const SECTION_TEXT = { common: 'Common', men: 'Men', women: 'Women' };
 
 function ModeSelect({ value, onChange }) {
@@ -88,7 +94,13 @@ function AllotForm({ locker, onClose }) {
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value, ...(k === 'months' ? { rent: toRupees(locker.monthlyFee * Number(e.target.value)) } : {}) });
   const save = useAction(
     () => post(`/lockers/${locker._id}/allot`, { memberId: member._id, months: Number(f.months), rent: toPaise(f.rent), deposit: toPaise(f.deposit), mode: f.mode, reference: f.reference || undefined }),
-    { success: (d) => `Locker ${locker.number} allotted${d.receiptNo ? ` · receipt ${d.receiptNo}` : ''}`, invalidate: ['lockers', 'dashboard'], onSuccess: onClose },
+    {
+      invalidate: ['lockers', 'dashboard'],
+      onSuccess: (d) => {
+        toastWithPrint(`Locker ${locker.number} allotted${d.receiptNo ? ` · receipt ${d.receiptNo}` : ''}`, d.allotment._id, d.receiptNo);
+        onClose();
+      },
+    },
   );
   return (
     <div className="space-y-3">
@@ -131,16 +143,21 @@ function InUse({ locker, onClose }) {
   const [f, setF] = useState({ months: 1, rent: toRupees(locker.monthlyFee), payMode: 'cash', depositReturned: toRupees(a.deposit), note: '' });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value, ...(k === 'months' ? { rent: toRupees(locker.monthlyFee * Number(e.target.value)) } : {}) });
   const extend = useAction(() => post(`/lockers/allotments/${a._id}/extend`, { months: Number(f.months), rent: toPaise(f.rent), mode: f.payMode }), {
-    success: (d) => `Extended till ${fmtDate(d.allotment.endDate)}`,
     invalidate: ['lockers', 'dashboard'],
-    onSuccess: onClose,
+    onSuccess: (d) => {
+      toastWithPrint(`Extended till ${fmtDate(d.allotment.endDate)}`, d.allotment._id, d.receiptNo);
+      onClose();
+    },
   });
   const release = useAction(() => post(`/lockers/allotments/${a._id}/release`, { depositReturned: toPaise(f.depositReturned), mode: f.payMode, note: f.note || undefined }), {
-    success: `Locker ${locker.number} is free now`,
     invalidate: ['lockers', 'dashboard'],
-    onSuccess: onClose,
+    onSuccess: (d) => {
+      toastWithPrint(`Locker ${locker.number} is free now`, d._id, d.receiptNo);
+      onClose();
+    },
   });
   const left = daysUntil(a.endDate);
+  const receipts = [...new Set((a.charges || []).map((c) => c.receiptNo).filter(Boolean))];
   return (
     <div className="space-y-4">
       <div className="rounded-lg bg-slate-50 p-3 text-sm">
@@ -153,6 +170,16 @@ function InUse({ locker, onClose }) {
         </p>
         <p className="text-slate-600">Deposit held: {inr(a.deposit)}</p>
       </div>
+      {receipts.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-slate-500">Receipts:</span>
+          {receipts.map((no) => (
+            <Button key={no} size="sm" variant="secondary" onClick={() => printReceipt(a._id, no)}>
+              <Printer className="size-3.5" /> Print receipt {no}
+            </Button>
+          ))}
+        </div>
+      )}
       {!mode && (
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setMode('extend')}>Extend</Button>

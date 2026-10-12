@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useLocation, useNavigate } from 'react-route
 import clsx from 'clsx';
 import {
   LayoutDashboard, Users, ScanLine, CalendarCheck, CreditCard, Tags, UserPlus, Wallet, BarChart3,
-  Fingerprint, Settings, UserCog, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench, KeyRound, MessageSquareWarning, HandCoins, BadgeCheck,
+  Fingerprint, Settings, UserCog, LogOut, Menu, X, Bell, Dumbbell, MessageSquare, HeartPulse, Salad, CalendarDays, Banknote, Store, Wrench, KeyRound, MessageSquareWarning, HandCoins, BadgeCheck, Ticket, ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '../store/auth';
 import { useBranches, useApi, useAction } from '../lib/hooks';
@@ -15,7 +15,9 @@ import { ClockButton } from '../pages/StaffAttendance';
 const NAV = [
   { section: 'Daily', to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, perm: 'dashboard.read' },
   { to: '/admin/check-in', label: 'Check-in', icon: ScanLine, perm: 'attendance.write' },
+  { to: '/admin/handover', label: 'Shift handover', icon: ClipboardList, perm: 'handover.read' },
   { to: '/admin/members', label: 'Members', icon: Users, perm: 'members.read' },
+  { to: '/admin/trials', label: 'Trials', icon: Ticket, perm: 'trials.write' },
   { to: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, perm: 'attendance.read' },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard, perm: 'payments.read' },
   { to: '/admin/lockers', label: 'Lockers', icon: KeyRound, perm: 'lockers.read' },
@@ -180,7 +182,7 @@ export default function AdminLayout() {
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
           <button onClick={() => setOpen(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Open menu">
             <Menu className="size-5" />
           </button>

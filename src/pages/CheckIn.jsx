@@ -2,11 +2,72 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import clsx from 'clsx';
-import { Camera, CameraOff, Search, ShieldCheck, ShieldX } from 'lucide-react';
+import { Camera, CameraOff, Search, ShieldCheck, ShieldX, RefreshCw, IndianRupee, Play } from 'lucide-react';
 import { get, post, errorMessage } from '../lib/api';
 import { useAuth } from '../store/auth';
-import { inr, fmtTime } from '../lib/format';
+import { useAction } from '../lib/hooks';
+import { inr, fmtTime, daysUntil } from '../lib/format';
 import { Avatar, Badge, Button, Card, Input, PageHeader } from '../components/ui';
+import { MembershipModal, PaymentModal } from './members/MemberModals';
+
+const RENEW_CODES = ['EXPIRED', 'NO_MEMBERSHIP', 'CANCELLED'];
+const FIX_CODES = [...RENEW_CODES, 'DUES', 'FROZEN'];
+
+// Membership with money due that is still running (or starts later).
+const dueSubscription = (subs = []) =>
+  subs.filter((s) => s.status === 'active' && s.dueAmount > 0 && daysUntil(s.endDate) >= 0).sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0] || null;
+
+function runningFreeze(subs = []) {
+  for (const s of subs) {
+    if (s.status !== 'active') continue;
+    const f = s.freezes?.find((x) => !x.endedEarlyAt && daysUntil(x.from) <= 0 && daysUntil(x.to) >= 0);
+    if (f) return { sub: s, freeze: f };
+  }
+  return null;
+}
+
+/** One-click fixes for a refused entry; after a successful save the check-in is tried again. */
+function DeniedActions({ result, onRetry }) {
+  const can = useAuth((s) => s.can);
+  const id = result.member._id;
+  const fixable = FIX_CODES.includes(result.code);
+  const { data } = useQuery({ queryKey: ['member', id], queryFn: () => get(`/members/${id}`), enabled: fixable });
+  const [modal, setModal] = useState(null);
+  const unfreeze = useAction(({ sub, freeze }) => post(`/subscriptions/${sub._id}/freezes/${freeze._id}/end`), {
+    success: 'Freeze ended',
+    invalidate: ['member', 'members', 'dashboard'],
+    onSuccess: onRetry,
+  });
+  if (!fixable || !data) return null;
+  const subs = data.subscriptions || [];
+  const due = result.code === 'DUES' ? dueSubscription(subs) : null;
+  const frozen = result.code === 'FROZEN' ? runningFreeze(subs) : null;
+  const renew = RENEW_CODES.includes(result.code) && can('subscriptions.write');
+  if (!renew && !(due && can('payments.create')) && !(frozen && can('subscriptions.write'))) return null;
+  return (
+    <div className="mt-4 flex flex-wrap justify-center gap-2">
+      {renew && (
+        <Button onClick={() => setModal('renew')}>
+          <RefreshCw className="size-4" /> {subs.length ? 'Renew' : 'Add membership'}
+        </Button>
+      )}
+      {due && can('payments.create') && (
+        <Button onClick={() => setModal('pay')}>
+          <IndianRupee className="size-4" /> Collect due {inr(due.dueAmount)}
+        </Button>
+      )}
+      {frozen && can('subscriptions.write') && (
+        <Button loading={unfreeze.isPending} onClick={() => unfreeze.mutate(frozen)}>
+          <Play className="size-4" /> End freeze
+        </Button>
+      )}
+      <div className="text-left">
+        <MembershipModal open={modal === 'renew'} onClose={() => setModal(null)} member={data.member} isFirst={!subs.length} onSaved={onRetry} />
+        <PaymentModal open={modal === 'pay'} onClose={() => setModal(null)} subscription={due} onSaved={onRetry} />
+      </div>
+    </div>
+  );
+}
 
 function useDebounced(value, ms = 300) {
   const [v, setV] = useState(value);
@@ -68,15 +129,15 @@ export default function CheckIn() {
 
   const { data: found } = useQuery({
     queryKey: ['checkin-search', query, branchId],
-    queryFn: () => get('/members', { search: query, limit: 6, branchId: branchId || undefined }),
+    queryFn: () => get('/members', { search: query, limit: 6, branchId: branchId || undefined, includeTrials: true }),
     enabled: query.length >= 2,
   });
 
-  const submit = useCallback(async (body) => {
+  const submit = useCallback(async (body, extra = {}) => {
     setBusy(true);
     try {
       const r = await post('/attendance/check-in', body);
-      setResult(r);
+      setResult({ ...r, ...extra });
     } catch (err) {
       setResult({ allowed: false, reason: errorMessage(err), error: true });
     } finally {
@@ -130,7 +191,7 @@ export default function CheckIn() {
                     <div className="min-w-0">
                       <p className="truncate font-medium">{m.name}</p>
                       <p className="text-xs text-slate-500">
-                        #{m.memberCode} · {m.phone} · <Badge status={m.membershipStatus} />
+                        #{m.memberCode} · {m.phone} · {m.isTrial ? <Badge status="trial">Trial pass</Badge> : <Badge status={m.membershipStatus} />}
                       </p>
                     </div>
                   </div>
@@ -159,16 +220,21 @@ export default function CheckIn() {
                   <Avatar name={result.member.name} src={result.member.photoUrl} size="lg" />
                   <div className="text-left">
                     <p className="text-lg font-semibold">{result.member.name}</p>
-                    <p className="text-sm text-slate-600">#{result.member.memberCode}</p>
+                    <p className="text-sm text-slate-600">
+                      #{result.member.memberCode}
+                      {result.member.isTrial && <Badge status="trial" className="ml-2">Trial pass</Badge>}
+                    </p>
                   </div>
                 </div>
               )}
               <p className={clsx('mt-4 text-lg', result.allowed ? 'text-emerald-800' : 'text-rose-800')}>{result.reason}</p>
               {result.dueAmount > 0 && <p className="mt-1 font-medium text-amber-700">Pending dues: {inr(result.dueAmount)}</p>}
               {result.attendance?.punches > 1 && <p className="mt-1 text-sm text-slate-500">Already checked in today at {fmtTime(result.attendance.checkInAt)}</p>}
+              {result.retried && result.allowed && <p className="mt-1 text-sm font-medium text-emerald-700">Checked in after the fix</p>}
+              {result.member && !result.allowed && !result.error && <DeniedActions key={`${result.member._id}:${result.code}`} result={result} onRetry={() => submit({ memberId: result.member._id }, { retried: true })} />}
               {result.member && !result.allowed && (
                 <Link to={`/admin/members/${result.member._id}`} className="mt-4 text-sm font-medium text-brand-700 hover:underline">
-                  Open member to renew / collect payment →
+                  Open member →
                 </Link>
               )}
             </div>

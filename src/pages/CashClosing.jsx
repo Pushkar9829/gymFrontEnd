@@ -2,6 +2,7 @@ import { useState } from 'react';
 import dayjs from 'dayjs';
 import clsx from 'clsx';
 import { Download, Lock, LockOpen, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
 import { post, openFile } from '../lib/api';
 import { useAction, useApi, useBranches, useDefaultBranchId } from '../lib/hooks';
 import { useAuth } from '../store/auth';
@@ -79,7 +80,14 @@ function CloseForm({ data, branchId }) {
         note: note.trim() || undefined,
         statement: Object.fromEntries(Object.entries(statement).filter(([, v]) => v !== '').map(([k, v]) => [k, toPaise(v)])),
       }),
-    { success: (c) => (c.difference ? `Day closed. Cash ${c.difference < 0 ? 'short' : 'excess'} by ${inr(Math.abs(c.difference), { decimals: true })}` : 'Day closed. Cash matched.'), invalidate: ['cash', 'dashboard'] },
+    {
+      invalidate: ['cash', 'dashboard'],
+      // Only a matched drawer is a plain success; short or excess cash is a warning.
+      onSuccess: (c) =>
+        c.difference
+          ? toast.warning(`Day closed. Cash ${c.difference < 0 ? 'short' : 'excess'} by ${inr(Math.abs(c.difference), { decimals: true })}`)
+          : toast.success('Day closed. Cash matched.'),
+    },
   );
   const nonCash = ['upi', 'card', 'bank', 'online'].filter((m) => byMode[m]?.in || byMode[m]?.out);
   return (

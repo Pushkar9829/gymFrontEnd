@@ -31,7 +31,7 @@ function PaymentFields({ value, onChange, max }) {
 }
 
 /** New membership or renewal, with optional first payment. */
-export function MembershipModal({ open, onClose, member, isFirst }) {
+export function MembershipModal({ open, onClose, member, isFirst, onSaved }) {
   const { data: plans } = useQuery({ queryKey: ['plans', 'active', member.branchId?._id], queryFn: () => get('/plans', { active: true, branchId: member.branchId?._id || member.branchId }), enabled: open });
   const { data: gym } = useQuery({ queryKey: ['settings'], queryFn: () => get('/settings'), enabled: open });
   const [planId, setPlanId] = useState('');
@@ -60,13 +60,14 @@ export function MembershipModal({ open, onClose, member, isFirst }) {
   const save = useAction((body) => post('/subscriptions', body), {
     success: 'Membership added',
     invalidate: [...INVALIDATE, 'approvals'],
-    onSuccess: () => {
+    onSuccess: (d) => {
       onClose();
       setPlanId('');
       setDiscount('');
       setPay({ amount: '', mode: 'upi', reference: '' });
       setNeedApproval(false);
       setApprovalId('');
+      onSaved?.(d);
     },
     onError: (err) => needsApproval(err) && setNeedApproval(true),
   });
@@ -211,9 +212,9 @@ const Row = ({ label, value }) => (
   </div>
 );
 
-export function PaymentModal({ open, onClose, subscription }) {
+export function PaymentModal({ open, onClose, subscription, onSaved }) {
   const [pay, setPay] = useState({ amount: '', mode: 'upi', reference: '' });
-  const save = useAction((body) => post('/payments', body), { success: 'Payment recorded', invalidate: INVALIDATE, onSuccess: onClose });
+  const save = useAction((body) => post('/payments', body), { success: 'Payment recorded', invalidate: INVALIDATE, onSuccess: (d) => (onClose(), onSaved?.(d)) });
   if (!subscription) return null;
   return (
     <Modal

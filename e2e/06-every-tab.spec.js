@@ -13,6 +13,8 @@ const STAFF_TABS = [
   { url: '/admin/cash', tabs: ['Close day', 'History'] },
   { url: '/admin/approvals', tabs: ['Waiting', 'Approved', 'Used', 'Rejected', 'Expired', 'All'] },
   { url: '/admin/feedback', tabs: ['Open', 'In progress', 'Resolved', 'Closed', 'All'] },
+  { url: '/admin/trials', tabs: ['Active', 'Upcoming', 'Ended', 'Joined', 'All'] },
+  { url: '/admin/handover', tabs: ['Open tasks', 'Done', 'Notes', 'All'] },
   { url: '/admin/settings', tabs: ['Gym & entry rules', 'Branches', 'Staff', 'Audit log', 'My account'] },
 ];
 

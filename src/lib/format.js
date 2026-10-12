@@ -31,6 +31,7 @@ export const STATUS_STYLES = {
   frozen: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
   expired: 'bg-rose-50 text-rose-700 ring-rose-600/20',
   cancelled: 'bg-slate-100 text-slate-600 ring-slate-500/20',
+  ended: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   none: 'bg-slate-100 text-slate-600 ring-slate-500/20',
   new: 'bg-sky-50 text-sky-700 ring-sky-600/20',
   contacted: 'bg-amber-50 text-amber-700 ring-amber-600/20',

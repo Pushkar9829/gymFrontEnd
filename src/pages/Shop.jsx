@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { Plus, Minus, Search, ShoppingCart, Pencil, PackagePlus, FileText, Download, Trash2 } from 'lucide-react';
+import { Plus, Minus, Search, ShoppingCart, Pencil, PackagePlus, Printer, Download, Trash2 } from 'lucide-react';
 import { get, post, put, openFile } from '../lib/api';
 import { useAction, useApi, useBranches, useDefaultBranchId } from '../lib/hooks';
 import { useAuth } from '../store/auth';
@@ -172,9 +172,10 @@ function Pos() {
             Collect {inr(totals.total)}
           </Button>
           {last && (
-            <button className="w-full text-center text-sm text-brand-700 hover:underline" onClick={() => openFile(`/shop/sales/${last._id}/receipt.pdf`)}>
+            <Button variant="secondary" className="w-full" onClick={() => openFile(`/shop/sales/${last._id}/receipt.pdf`)}>
+              <Printer className="size-4" />
               Print receipt {last.saleNo}
-            </button>
+            </Button>
           )}
         </div>
       </Card>
@@ -391,8 +392,8 @@ function Sales() {
               label: '',
               render: (r) => (
                 <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => openFile(`/shop/sales/${r._id}/receipt.pdf`)} aria-label="Receipt">
-                    <FileText className="size-4" />
+                  <Button size="sm" variant="ghost" onClick={() => openFile(`/shop/sales/${r._id}/receipt.pdf`)} aria-label="Print receipt" title="Print receipt">
+                    <Printer className="size-4" />
                   </Button>
                   {r.status === 'paid' && can('payments.refund') && (
                     <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => { const reason = window.prompt('Refund reason'); if (reason === null) return; if (!reason.trim()) return toast.error('Please give a reason to refund'); refund.mutate({ id: r._id, reason: reason.trim() }); }}>

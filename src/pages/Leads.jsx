@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Plus, Phone, MessageSquare, UserCheck } from 'lucide-react';
+import { Plus, Phone, MessageSquare, UserCheck, Ticket } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { get, post, put } from '../lib/api';
 import { useApi, useAction, useDefaultBranchId } from '../lib/hooks';
 import { useAuth } from '../store/auth';
 import { fmtDate, fmtDateTime, ymd } from '../lib/format';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, Spinner, Table, Tabs, Textarea } from '../components/ui';
+import { IssueTrialModal } from './Trials';
 
 const SOURCES = ['walk-in', 'phone', 'website', 'instagram', 'facebook', 'referral', 'other'];
 
@@ -59,8 +60,9 @@ function LeadForm({ onClose }) {
   );
 }
 
-function LeadDrawer({ id, onClose }) {
+function LeadDrawer({ id, onClose, onTrial }) {
   const navigate = useNavigate();
+  const can = useAuth((s) => s.can);
   const { data: lead } = useQuery({ queryKey: ['leads', id], queryFn: () => get(`/leads/${id}`) });
   const [note, setNote] = useState('');
   const [next, setNext] = useState('');
@@ -94,6 +96,11 @@ function LeadDrawer({ id, onClose }) {
             <span className="text-slate-500">· {lead.source} · added {fmtDate(lead.createdAt)}</span>
           </div>
           {lead.notes && <p className="rounded-lg bg-slate-50 p-3 text-sm">{lead.notes}</p>}
+          {lead.trialTo && lead.status === 'trial' && (
+            <p className="rounded-lg bg-violet-50 p-3 text-sm text-violet-800">
+              On a trial pass: {fmtDate(lead.trialFrom)} – {fmtDate(lead.trialTo)}
+            </p>
+          )}
 
           {lead.status !== 'converted' && lead.status !== 'lost' && (
             <div className="space-y-3 rounded-xl p-3 ring-1 ring-slate-200">
@@ -119,6 +126,11 @@ function LeadDrawer({ id, onClose }) {
                 <Button size="sm" variant="success" loading={convert.isPending} onClick={() => convert.mutate()}>
                   <UserCheck className="size-4" /> Convert to member
                 </Button>
+                {can('trials.write') && (
+                  <Button size="sm" variant="secondary" onClick={() => onTrial(lead)}>
+                    <Ticket className="size-4" /> Give trial pass
+                  </Button>
+                )}
                 <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => { const r = window.prompt('Why was this lead lost?'); if (r !== null) markLost.mutate(r.trim() || 'Not interested'); }}>
                   Mark lost
                 </Button>
@@ -152,6 +164,7 @@ export default function Leads() {
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [trialFor, setTrialFor] = useState(null);
   const can = useAuth((s) => s.can);
 
   const q = tab === 'due' ? { followUpDue: 'true' } : tab === 'open' ? {} : { status: tab };
@@ -213,7 +226,8 @@ export default function Leads() {
         )}
       </Card>
       {creating && <LeadForm onClose={() => setCreating(false)} />}
-      {openId && <LeadDrawer id={openId} onClose={() => setOpenId(null)} />}
+      {openId && <LeadDrawer id={openId} onClose={() => setOpenId(null)} onTrial={(l) => (setOpenId(null), setTrialFor(l))} />}
+      {trialFor && <IssueTrialModal lead={trialFor} onClose={() => setTrialFor(null)} />}
     </div>
   );
 }

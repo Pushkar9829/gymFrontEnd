@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Download, FileText } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { useApi } from '../lib/hooks';
 import { openFile } from '../lib/api';
 import { useAuth } from '../store/auth';
@@ -78,8 +78,10 @@ export default function Payments() {
                         e.stopPropagation();
                         openFile(`/payments/${p._id}/receipt.pdf`);
                       }}
+                      aria-label="Print receipt"
+                      title="Print receipt"
                     >
-                      <FileText className="size-4" />
+                      <Printer className="size-4" />
                     </Button>
                   ),
                 },

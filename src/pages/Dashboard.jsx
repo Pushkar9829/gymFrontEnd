@@ -7,6 +7,7 @@ import { inr, fromNow, fmtTime, ymd } from '../lib/format';
 import { useAuth } from '../store/auth';
 import SetupChecklist from './SetupChecklist';
 import { PendingList } from './Approvals';
+import { HandoverCard } from './Handover';
 import { Card, PageHeader, PageLoader, StatCard, Button } from '../components/ui';
 
 // A trainer's day: their classes today and PT clients with sessions left.
@@ -76,6 +77,7 @@ export default function Dashboard() {
         }
       />
 
+      {can('handover.read') && <HandoverCard />}
       <SetupChecklist />
       {user.role === 'trainer' && <TrainerDay />}
 
@@ -147,6 +149,14 @@ export default function Dashboard() {
                   <span className="text-slate-600">Lockers overdue</span>
                   <button className={data.lockersOverdue ? 'font-semibold text-rose-600 hover:underline' : 'font-semibold text-brand-700 hover:underline'} onClick={() => navigate('/admin/lockers?status=overdue')}>
                     {data.lockersOverdue}
+                  </button>
+                </li>
+              )}
+              {data.trials && (
+                <li className="flex items-center justify-between">
+                  <span className="text-slate-600">Trial visitors today</span>
+                  <button className="font-semibold text-brand-700 hover:underline" onClick={() => navigate('/admin/trials')}>
+                    {data.trials.visitsToday} of {data.trials.active} on a pass
                   </button>
                 </li>
               )}

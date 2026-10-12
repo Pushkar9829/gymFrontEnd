@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import {
   ArrowLeft, Pencil, Plus, IndianRupee, Snowflake, Ban, ShieldCheck, ShieldX, Smartphone, FileText, Trash2,
-  RefreshCw, Fingerprint, QrCode, ArrowUpCircle, XCircle, Play, Undo2, Link2, Copy,
+  RefreshCw, Fingerprint, QrCode, ArrowUpCircle, XCircle, Play, Undo2, Link2, Copy, Printer, Ticket,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { get, post, put as apiPut, del, openFile } from '../../lib/api';
@@ -19,6 +19,36 @@ import MemberAutopay from './MemberAutopay';
 import MemberLocker from './MemberLocker';
 import MemberFitness from '../fitness/MemberFitness';
 import { MembershipModal, PaymentModal, FreezeModal, ChangePlanModal, ReasonModal, RefundModal, PortalModal } from './MemberModals';
+import { TrialActions, TrialBadge } from '../Trials';
+
+function trialState(member) {
+  const t = member.trial || {};
+  if (!member.isTrial) return 'converted';
+  if (t.endedAt || daysUntil(t.to) < 0) return 'ended';
+  return daysUntil(t.from) > 0 ? 'upcoming' : 'active';
+}
+
+function TrialCard({ member, visits }) {
+  const t = member.trial || {};
+  const state = trialState(member);
+  return (
+    <div className="mt-4 rounded-xl bg-violet-50 p-4 ring-1 ring-violet-200">
+      <p className="flex flex-wrap items-center gap-2 font-semibold text-violet-900">
+        <Ticket className="size-4" /> {member.isTrial ? 'Trial pass' : 'Joined after a trial pass'} <TrialBadge status={state} />
+      </p>
+      <p className="mt-1 text-sm text-violet-800">
+        {fmtDate(t.from)} – {fmtDate(t.to)} · {visits} visit(s){t.fee ? ` · fee ${inr(t.fee)}` : ' · free'}
+        {t.override ? ' · repeat allowed by manager' : ''}
+      </p>
+      {member.isTrial && <p className="mt-1 text-xs text-violet-700">Not counted as a member. Convert to member to add a membership.</p>}
+      {member.isTrial && (
+        <div className="mt-3">
+          <TrialActions trial={{ ...member, status: state }} size="md" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AccessBanner({ access, member }) {
   const ok = access.allowed;
@@ -211,6 +241,7 @@ export default function MemberDetail() {
   const { can, user } = useAuth();
   const [tab, setTab] = useState('memberships');
   const [modal, setModal] = useState(null); // { type, sub, extra }
+  const [params, setParams] = useSearchParams();
 
   const { data, isLoading, refetch } = useQuery({ queryKey: ['member', id], queryFn: () => get(`/members/${id}`) });
   const { data: timeline } = useQuery({ queryKey: ['member', id, 'timeline'], queryFn: () => get(`/members/${id}/timeline`) });
@@ -223,6 +254,14 @@ export default function MemberDetail() {
   const unfreeze = useAction(({ sub, freeze }) => post(`/subscriptions/${sub._id}/freezes/${freeze._id}/end`), { success: 'Freeze ended. Access restored.', invalidate: ['member', 'members'] });
   const link = useAction((sub) => post('/online-payments/link', { subscriptionId: sub._id }), { onSuccess: (d) => setModal({ type: 'linkResult', extra: d }) });
   const remove = useAction(() => del(`/members/${id}`), { success: 'Member deleted', invalidate: ['members'], onSuccess: () => navigate('/admin/members') });
+
+  // Coming from "Convert to member": open the membership form straight away.
+  const addNow = params.get('add') === 'membership' && data && !data.member.isTrial;
+  useEffect(() => {
+    if (!addNow) return;
+    setModal({ type: 'membership' });
+    setParams({}, { replace: true });
+  }, [addNow, setParams]);
 
   if (isLoading || !data) return <PageLoader />;
   const { member, access, subscriptions, deviceUsers } = data;
@@ -258,14 +297,14 @@ export default function MemberDetail() {
                 {member.companyId && ` · ${member.companyId.name}`}
               </p>
               <div className="mt-2 flex items-center gap-2">
-                <Badge status={member.membershipStatus} />
+                {member.isTrial ? <Badge status="trial">Trial visitor</Badge> : <Badge status={member.membershipStatus} />}
                 {member.currentPlanName && <span className="text-sm text-slate-600">{member.currentPlanName}</span>}
                 {member.membershipEnd && <span className="text-sm text-slate-500">till {fmtDate(member.membershipEnd)}</span>}
               </div>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            {can('subscriptions.write') && (
+            {can('subscriptions.write') && !member.isTrial && (
               <Button onClick={() => setModal({ type: 'membership' })}>
                 <Plus className="size-4" /> {isFirst ? 'Add membership' : 'Renew'}
               </Button>
@@ -278,7 +317,7 @@ export default function MemberDetail() {
             <Button variant="secondary" onClick={() => setModal({ type: 'card' })}>
               <QrCode className="size-4" /> QR card
             </Button>
-            {can('members.write') && (
+            {can('members.write') && !member.isTrial && (
               <Button variant="secondary" onClick={() => setModal({ type: 'portal' })}>
                 <Smartphone className="size-4" /> App access {member.portalEnabled ? '(on)' : ''}
               </Button>
@@ -299,6 +338,7 @@ export default function MemberDetail() {
               </Button>
             )}
           </div>
+          {member.trial?.issuedAt && <TrialCard member={member} visits={(timeline?.attendance || []).filter((a) => a.isTrial).length} />}
         </Card>
         <div className="space-y-4">
           <AccessBanner access={access} member={member} />
@@ -360,7 +400,7 @@ export default function MemberDetail() {
                   render: (p) => (
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => openFile(`/payments/${p._id}/receipt.pdf`)}>
-                        Receipt
+                        <Printer className="size-3.5" /> Print receipt
                       </Button>
                       {p.type === 'payment' && can('payments.refund') && (
                         <Button size="sm" variant="ghost" className="text-rose-600" onClick={() => setModal({ type: 'refund', extra: p })}>

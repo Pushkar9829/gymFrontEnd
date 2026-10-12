@@ -5,7 +5,9 @@ import { loginStaff, watchErrors, shot, waitIdle } from './helpers.js';
 const SCREENS = [
   { label: 'Dashboard', heading: 'Dashboard' },
   { label: 'Check-in', heading: 'Check-in' },
+  { label: 'Shift handover', heading: 'Shift handover' },
   { label: 'Members', heading: 'Members' },
+  { label: 'Trials', heading: 'Trial passes' },
   { label: 'Attendance', heading: 'Attendance' },
   { label: 'Payments', heading: 'Payments' },
   { label: 'Lockers', heading: 'Lockers' },
@@ -32,13 +34,13 @@ const SCREENS = [
 const ROLE_MENU = {
   owner: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
   manager: SCREENS.map((s) => s.label).filter((l) => l !== 'My account'),
-  receptionist: ['Dashboard', 'Check-in', 'Members', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Day closing', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
-  trainer: ['Dashboard', 'Members', 'Attendance', 'Classes', 'Personal training', 'Workouts & diet', 'Plans & coupons', 'Equipment', 'My account'],
+  receptionist: ['Dashboard', 'Check-in', 'Shift handover', 'Members', 'Trials', 'Attendance', 'Payments', 'Lockers', 'Complaints & feedback', 'Classes', 'Personal training', 'Workouts & diet', 'Leads', 'Messages', 'Plans & coupons', 'Shop', 'Day closing', 'Expenses', 'Equipment', 'Biometric devices', 'My account'],
+  trainer: ['Dashboard', 'Shift handover', 'Members', 'Attendance', 'Classes', 'Personal training', 'Workouts & diet', 'Plans & coupons', 'Equipment', 'My account'],
 };
 
 for (const [role, allowed] of Object.entries(ROLE_MENU)) {
   test(`${role}: menu shows exactly the allowed screens and each one opens cleanly`, async ({ page }) => {
-    test.setTimeout(210_000); // up to 21 screens, each with a screenshot
+    test.setTimeout(240_000); // up to 23 screens, each with a screenshot
     const watch = watchErrors(page);
     await loginStaff(page, role);
     const nav = page.locator('aside nav').first();

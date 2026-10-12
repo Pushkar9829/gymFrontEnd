@@ -19,6 +19,8 @@ function GymSettings() {
   if (!f) return <PageLoader />;
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const setS = (k, v) => setF({ ...f, settings: { ...f.settings, [k]: v } });
+  const trial = f.settings.trial || {};
+  const setTrial = (k, v) => setS('trial', { ...trial, [k]: v });
   const editable = can('settings.write');
   const dirty = JSON.stringify(f) !== JSON.stringify({ ...data, settings: { ...data.settings, reminderDays: (data.settings?.reminderDays || []).join(', ') } });
 
@@ -84,6 +86,42 @@ function GymSettings() {
           <Field label="Renewal window for retention (days)" hint="Renewing within this many days after the end date counts as retained">
             <Input type="number" min="0" max="90" value={f.settings.retentionGraceDays ?? 15} onChange={(e) => setS('retentionGraceDays', e.target.value)} disabled={!editable} />
           </Field>
+          <Field label="Receipt paper" hint="Payment, shop and locker receipts. 80 / 58 mm fit thermal receipt printers.">
+            <Select value={f.settings.receiptPaper || 'a4'} onChange={(e) => setS('receiptPaper', e.target.value)} disabled={!editable}>
+              <option value="a4">A4 page</option>
+              <option value="80mm">80 mm thermal roll</option>
+              <option value="58mm">58 mm thermal roll</option>
+            </Select>
+          </Field>
+        </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">Trial passes</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="sm:col-span-3">
+              <Toggle checked={trial.enabled !== false} onChange={(v) => setTrial('enabled', v)} disabled={!editable} label="Reception can give trial / guest passes" />
+            </div>
+            <Field label="Default length">
+              <Select value={trial.defaultDays ?? 1} onChange={(e) => setTrial('defaultDays', Number(e.target.value))} disabled={!editable}>
+                {[1, 2, 3].map((d) => (
+                  <option key={d} value={d}>
+                    {d} day{d > 1 ? 's' : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Longest trial">
+              <Select value={trial.maxDays ?? 3} onChange={(e) => setTrial('maxDays', Number(e.target.value))} disabled={!editable}>
+                {[1, 2, 3].map((d) => (
+                  <option key={d} value={d}>
+                    {d} day{d > 1 ? 's' : ''}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="One trial per phone every (days)" hint="Owner / manager can override">
+              <Input type="number" min="0" max="365" value={trial.repeatDays ?? 90} onChange={(e) => setTrial('repeatDays', e.target.value)} disabled={!editable} />
+            </Field>
+          </div>
         </div>
       </Card>
       {editable && (
@@ -110,6 +148,13 @@ function GymSettings() {
                 discountLimitPercent: Number(f.settings.discountLimitPercent ?? 10),
                 cashShortAlert: Number(f.settings.cashShortAlert ?? 10000),
                 retentionGraceDays: Number(f.settings.retentionGraceDays ?? 15),
+                receiptPaper: f.settings.receiptPaper || 'a4',
+                trial: {
+                  enabled: trial.enabled !== false,
+                  defaultDays: Math.min(Number(trial.defaultDays ?? 1), Number(trial.maxDays ?? 3)),
+                  maxDays: Number(trial.maxDays ?? 3),
+                  repeatDays: Number(trial.repeatDays ?? 90),
+                },
               },
             })
           }
